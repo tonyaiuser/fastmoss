@@ -129,6 +129,15 @@ def generate_html():
             views = r.get("views", 0)
             likes = r.get("likes", 0)
             ct = str(r.get("create_time", ""))[:16]
+            # 判断是否最近2天
+            try:
+                ct_parsed = ct.replace("T", " ")
+                from datetime import datetime as _dt
+                ct_dt = _dt.strptime(ct_parsed[:16], "%Y-%m-%d %H:%M")
+                is_fresh = (_dt.now() - ct_dt).total_seconds() < 2 * 86400
+            except Exception:
+                is_fresh = False
+            fresh_cls = " fresh" if is_fresh else ""
             creator = r.get("creator_name", "")
             desc = str(r.get("video_desc", ""))[:60]
             item = str(r.get("item_name", ""))[:60]
@@ -157,7 +166,7 @@ def generate_html():
 </td>
 <td class="right num">{fmt_number(views)}</td>
 <td class="right">{fmt_number(likes)}</td>
-<td class="nowrap">{ct}</td>
+<td class="nowrap{fresh_cls}">{ct}</td>
 <td class="cell-item">
   <div class="item-cn">{item_cn}</div>
   <div class="item-en">{item}</div>
@@ -209,7 +218,7 @@ def generate_html():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TabCut 选品报告 - {today}</title>
+<title>巴巴塔自动选品系统 - {today}</title>
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#1f2937;font-size:13px}}
@@ -257,6 +266,7 @@ tr:hover td{{background:#fafbff}}
 .tag{{display:inline-block;background:#f3f4f6;color:#6b7280;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px}}
 a{{color:#3b82f6;text-decoration:none;font-size:12px}}
 a:hover{{text-decoration:underline}}
+.fresh{{color:#10b981;font-weight:600}}
 .hidden-row{{display:none!important}}
 .modal{{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:9999;cursor:pointer;justify-content:center;align-items:center}}
 .modal.show{{display:flex}}
@@ -290,7 +300,7 @@ td,th{{padding:6px 6px;font-size:11px}}
 </head>
 <body>
 <div class="header">
-<h1>TabCut 自动选品报告</h1>
+<h1>巴巴塔自动选品系统</h1>
 <div class="sub">数据日期: {today} | 生成: {datetime.now().strftime("%H:%M:%S")} | 地区: 美国 (US)</div>
 </div>
 <div class="tabs">
@@ -428,7 +438,7 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
     index_html = f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta http-equiv="refresh" content="0;url=report_{today}.html">
-<title>TabCut 选品报告</title>
+<title>巴巴塔自动选品系统</title>
 </head><body><p>正在跳转到最新报告...</p>
 <a href="report_{today}.html">点击这里</a></body></html>"""
     with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:

@@ -79,7 +79,7 @@ def build_message():
     report_url = f"{REPORT_BASE_URL}/report_{today}.html"
 
     lines = [
-        f"## TabCut 选品日报 {today}",
+        f"## 巴巴塔选品日报 {today}",
         "",
         f"- 视频榜日榜: **{len(df1)}** 条",
         f"- 新素材发现: **{len(df2)}** 条",
@@ -120,7 +120,7 @@ def send_dingtalk(text):
     payload = {
         "msgtype": "markdown",
         "markdown": {
-            "title": f"TabCut 选品日报 {datetime.now().strftime('%Y-%m-%d')}",
+            "title": f"巴巴塔选品日报 {datetime.now().strftime('%Y-%m-%d')}",
             "text": text
         }
     }

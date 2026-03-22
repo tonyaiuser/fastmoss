@@ -34,6 +34,18 @@ EXCLUDED_CATEGORIES = [
 # 排除的分类 ID (视频榜/商品榜用)
 EXCLUDED_CATEGORY_IDS = {7, 9}  # 7=Food & Beverages, 9=Health
 
+# 排除的商品名关键词（食品饮料糖果等）
+EXCLUDED_ITEM_KEYWORDS = [
+    "candy", "lollipop", "gummy", "gummies", "chocolate",
+    "drink mix", "drink mix", "beverage", "juice", "soda",
+    "coffee", "tea bag", "matcha",
+    "bread", "cookie", "cookies", "cake", "snack", "snacks",
+    "protein powder", "whey protein", "creatine",
+    "electrolyte", "boba", "icee",
+    "nasal stick", "boomboom",
+    "vitamin", "supplement",
+]
+
 # 全球知名IP关键词
 GLOBAL_IP_KEYWORDS = [
     "disney", "marvel", "pokemon", "hello kitty", "barbie",
@@ -76,6 +88,11 @@ def is_excluded(item_name="", category_name="", category_id=None):
     text = f"{item_name} {category_name}".lower()
     for kw in EXCLUDED_CATEGORIES:
         if kw.lower() in text:
+            return True
+
+    # 检查商品名食品饮料关键词
+    for kw in EXCLUDED_ITEM_KEYWORDS:
+        if kw in text:
             return True
 
     # 检查全球知名IP
