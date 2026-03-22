@@ -12,6 +12,7 @@ import urllib.request
 from datetime import datetime
 
 import pandas as pd
+from deep_translator import GoogleTranslator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
@@ -59,6 +60,14 @@ def fmt_number(n):
         return str(n)
 
 
+def translate_name(name):
+    """翻译单个商品名为中文"""
+    try:
+        return GoogleTranslator(source="en", target="zh-CN").translate(str(name)[:80])
+    except Exception:
+        return str(name)[:40]
+
+
 def build_message():
     today = datetime.now().strftime("%Y-%m-%d")
 
@@ -79,27 +88,27 @@ def build_message():
         "",
     ]
 
-    # Top 5 视频
+    # Top 5 视频（中文商品名）
     if not df1.empty and "total_score" in df1.columns:
         lines.append("### Top 5 视频")
         top5 = df1.nlargest(5, "total_score")
         for i, (_, r) in enumerate(top5.iterrows(), 1):
-            name = str(r.get("item_name", ""))[:40]
+            name_cn = translate_name(r.get("item_name", ""))
             views = fmt_number(r.get("views", 0))
             score = r.get("total_score", 0)
             ct = str(r.get("create_time", ""))[:10]
-            lines.append(f"{i}. [{score:.0f}分] {name} ({views}播放, {ct})")
+            lines.append(f"{i}. [{score:.0f}分] {name_cn} ({views}播放, {ct})")
         lines.append("")
 
-    # Top 5 新商品
+    # Top 5 新商品（中文商品名）
     if not df4.empty:
         lines.append("### Top 5 新商品")
         top5p = df4.head(5)
         for i, (_, r) in enumerate(top5p.iterrows(), 1):
-            name = str(r.get("item_name", ""))[:40]
+            name_cn = translate_name(r.get("item_name", ""))
             sold = fmt_number(r.get("sold_period", 0))
             price = r.get("price", "")
-            lines.append(f"{i}. {name} (${price}, 日销{sold})")
+            lines.append(f"{i}. {name_cn} (${price}, 日销{sold})")
         lines.append("")
 
     lines.append(f"[查看完整报告]({report_url})")

@@ -27,6 +27,8 @@ EXCLUDED_CATEGORIES = [
     "保健食品", "Health", "Health & Wellness",
     "美容保健", "Beauty Supplements",
     "冲调饮品", "Instant Drinks", "Beverages",
+    "Books & Magazines", "书籍", "图书", "Books",
+    "Supplements", "保健品", "膳食补充剂", "Vitamins",
 ]
 
 # 排除的分类 ID (视频榜/商品榜用)
