@@ -3,6 +3,11 @@
 
 import os
 import json
+import time
+import hmac
+import hashlib
+import base64
+import urllib.parse
 import urllib.request
 from datetime import datetime
 
@@ -15,8 +20,25 @@ WEBHOOK_URL = os.environ.get(
     "DINGTALK_WEBHOOK",
     "https://oapi.dingtalk.com/robot/send?access_token=e43a345b41c83d7e0c98f4424418422a7202aac849c949aedc7fb922f6de810f"
 )
+DINGTALK_SECRET = os.environ.get(
+    "DINGTALK_SECRET",
+    "SECd15e451a75471a32526ae91a50ff0107727a2fe53dbe7d0e2f1103048236017b"
+)
 
 REPORT_BASE_URL = "https://tonyaiuser.github.io/fastmoss"
+
+
+def get_signed_url():
+    """生成带签名的钉钉 Webhook URL"""
+    timestamp = str(round(time.time() * 1000))
+    string_to_sign = f"{timestamp}\n{DINGTALK_SECRET}"
+    hmac_code = hmac.new(
+        DINGTALK_SECRET.encode("utf-8"),
+        string_to_sign.encode("utf-8"),
+        digestmod=hashlib.sha256
+    ).digest()
+    sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
+    return f"{WEBHOOK_URL}&timestamp={timestamp}&sign={sign}"
 
 
 def read_csv_safe(path):
@@ -95,8 +117,9 @@ def send_dingtalk(text):
     }
 
     data = json.dumps(payload).encode("utf-8")
+    url = get_signed_url()
     req = urllib.request.Request(
-        WEBHOOK_URL,
+        url,
         data=data,
         headers={"Content-Type": "application/json"}
     )
