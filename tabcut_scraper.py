@@ -44,6 +44,11 @@ EXCLUDED_ITEM_KEYWORDS = [
     "electrolyte", "boba", "icee",
     "nasal stick", "boomboom",
     "vitamin", "supplement",
+    # 书籍
+    "book set", "hardcover", "paperback", "biography", "biographies", "novel",
+    # 食品（精准匹配）
+    "olive oil", "sea moss", "beef jerky", "beef tallow", "tallow balm",
+    "waffle cone", "ice cream",
 ]
 
 # 全球知名IP关键词

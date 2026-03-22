@@ -121,7 +121,7 @@ def generate_html():
 
     def video_rows(df, is_discover=False):
         if df.empty:
-            return '<tr><td colspan="9" class="empty">暂无数据</td></tr>'
+            return '<tr><td colspan="10" class="empty">暂无数据</td></tr>'
         rows = []
         for i, (_, r) in enumerate(df.iterrows(), 1):
             score = r.get("total_score", 0)
@@ -160,19 +160,19 @@ def generate_html():
 <td class="center"><span class="score {sc}">{score:.0f}</span></td>
 <td>{img_html(vc, 48)}</td>
 <td>{img_html(ic, 48)}</td>
-<td class="cell-main">
-  <div class="creator">{creator}</div>
-  <div class="desc">{desc}</div>
-</td>
-<td class="right num">{fmt_number(views)}</td>
-<td class="right">{fmt_number(likes)}</td>
-<td class="nowrap{fresh_cls}">{ct}</td>
 <td class="cell-item">
   <div class="item-cn">{item_cn}</div>
   <div class="item-en">{item}</div>
   {extra}
 </td>
+<td class="right num">{fmt_number(views)}</td>
+<td class="right">{fmt_number(likes)}</td>
+<td class="nowrap{fresh_cls}">{ct}</td>
 <td class="center">{link_html}</td>
+<td class="cell-main">
+  <div class="creator">{creator}</div>
+  <div class="desc">{desc}</div>
+</td>
 </tr>''')
         return "\n".join(rows)
 
@@ -328,12 +328,12 @@ td,th{{padding:6px 6px;font-size:11px}}
 <th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:56px">视频</th>
 <th style="width:56px">商品</th>
-<th data-c="4" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="8" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
 </tr></thead><tbody>
 {video_rows(df1)}
 </tbody></table></div>
@@ -353,12 +353,12 @@ td,th{{padding:6px 6px;font-size:11px}}
 <th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:56px">视频</th>
 <th style="width:56px">商品</th>
-<th data-c="4" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="8" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
 </tr></thead><tbody>
 {video_rows(df2)}
 </tbody></table></div>
@@ -379,12 +379,12 @@ td,th{{padding:6px 6px;font-size:11px}}
 <th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:56px">视频</th>
 <th style="width:56px">商品</th>
-<th data-c="4" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
 <th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="8" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
 </tr></thead><tbody>
 {video_rows(df3, is_discover=True)}
 </tbody></table></div>
