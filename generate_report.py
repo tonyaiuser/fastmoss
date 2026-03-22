@@ -393,7 +393,25 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
+    # 同时输出到 docs/ 目录供 GitHub Pages 使用
+    docs_dir = os.path.join(BASE_DIR, "docs")
+    os.makedirs(docs_dir, exist_ok=True)
+    docs_path = os.path.join(docs_dir, f"report_{today}.html")
+    with open(docs_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    # 生成 index.html 自动跳转到最新报告
+    index_html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta http-equiv="refresh" content="0;url=report_{today}.html">
+<title>TabCut 选品报告</title>
+</head><body><p>正在跳转到最新报告...</p>
+<a href="report_{today}.html">点击这里</a></body></html>"""
+    with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(index_html)
+
     print(f"✓ 报告已生成: {output_path}")
+    print(f"✓ Pages 报告: {docs_path}")
     return output_path
 
 
