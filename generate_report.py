@@ -85,7 +85,7 @@ def img_html(url, size=52):
     url = str(url) if url and str(url) != "nan" else ""
     if not url:
         return f'<div class="img-placeholder" style="width:{size}px;height:{size}px;">无图</div>'
-    return f'<img src="{url}" loading="lazy" class="thumb" style="width:{size}px;height:{size}px;" onerror="this.outerHTML=\'<div class=img-placeholder style=width:{size}px;height:{size}px>无图</div>\'" onclick="showImg(this.src)">'
+    return f'<img src="{url}" loading="lazy" class="thumb" style="width:{size}px;height:{size}px;" onerror="this.style.display=\'none\'" onclick="showImg(this.src)">'
 
 
 def generate_html():
@@ -144,8 +144,13 @@ def generate_html():
             item_cn = get_cn(r.get("item_name", ""))
             vurl = r.get("video_url", "")
             vurl_str = str(vurl) if vurl and str(vurl) != "nan" else ""
-            vc = r.get("video_cover", "")
-            ic = r.get("item_cover", "")
+            vc = str(r.get("video_cover", ""))
+            ic = str(r.get("item_cover", ""))
+            vc = "" if vc in ("", "nan") else vc
+            ic = "" if ic in ("", "nan") else ic
+            # fallback: video_cover 为空时用 item_cover 代替
+            if not vc:
+                vc = ic
 
             extra = ""
             if is_discover:

@@ -28,6 +28,14 @@ $PYTHON generate_report.py >> "$LOG_FILE" 2>&1
 # 3. 推送到 GitHub Pages（失败不影响后续通知）
 echo "[3/4] 推送到 GitHub Pages..." >> "$LOG_FILE"
 set +e
+
+# cron 环境无 TTY，用 gh token 认证 git push
+export GIT_TERMINAL_PROMPT=0
+GITHUB_TOKEN=$(/opt/homebrew/bin/gh auth token 2>/dev/null)
+if [ -n "$GITHUB_TOKEN" ]; then
+    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/tonyaiuser/fastmoss.git" >> "$LOG_FILE" 2>&1
+fi
+
 git add docs/ >> "$LOG_FILE" 2>&1
 git_add_docs_status=$?
 git add -u >> "$LOG_FILE" 2>&1
@@ -54,6 +62,9 @@ else
         fi
     fi
 fi
+
+# 恢复原始 remote URL（不泄露 token）
+git remote set-url origin "https://github.com/tonyaiuser/fastmoss.git" >> "$LOG_FILE" 2>&1
 set -e
 
 # 4. 钉钉推送
