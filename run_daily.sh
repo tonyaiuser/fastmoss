@@ -29,12 +29,11 @@ $PYTHON generate_report.py >> "$LOG_FILE" 2>&1
 echo "[3/4] 推送到 GitHub Pages..." >> "$LOG_FILE"
 set +e
 
-# cron 环境无 TTY，用 gh token 认证 git push
+# cron 环境无 TTY，显式导出 gh token 并在 push 完后恢复 remote
 export GIT_TERMINAL_PROMPT=0
-GITHUB_TOKEN=$(/opt/homebrew/bin/gh auth token 2>/dev/null)
-if [ -n "$GITHUB_TOKEN" ]; then
-    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/tonyaiuser/fastmoss.git" >> "$LOG_FILE" 2>&1
-fi
+ORIG_REMOTE=$(git remote get-url origin 2>/dev/null)
+GITHUB_TOKEN=$(/opt/homebrew/bin/gh auth token 2>> "$LOG_FILE")
+TOKEN_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/tonyaiuser/fastmoss.git"
 
 git add docs/ >> "$LOG_FILE" 2>&1
 git_add_docs_status=$?
@@ -52,6 +51,11 @@ else
         if [ $git_commit_status -ne 0 ]; then
             log "   Git commit 失败，跳过 GitHub Pages 推送，但继续执行通知"
         else
+            if [ -n "$GITHUB_TOKEN" ]; then
+                git remote set-url origin "$TOKEN_REMOTE" >> "$LOG_FILE" 2>&1
+            else
+                log "   未获取到 gh token，将直接尝试 push"
+            fi
             git push origin main >> "$LOG_FILE" 2>&1
             git_push_status=$?
             if [ $git_push_status -ne 0 ]; then
@@ -64,7 +68,12 @@ else
 fi
 
 # 恢复原始 remote URL（不泄露 token）
-git remote set-url origin "https://github.com/tonyaiuser/fastmoss.git" >> "$LOG_FILE" 2>&1
+if [ -n "$ORIG_REMOTE" ]; then
+    git remote set-url origin "$ORIG_REMOTE" >> "$LOG_FILE" 2>&1
+else
+    git remote set-url origin "https://github.com/tonyaiuser/fastmoss.git" >> "$LOG_FILE" 2>&1
+fi
+unset GITHUB_TOKEN TOKEN_REMOTE ORIG_REMOTE
 set -e
 
 # 4. 钉钉推送
