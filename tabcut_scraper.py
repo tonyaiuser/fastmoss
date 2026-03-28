@@ -197,7 +197,8 @@ def task1_video_rank(page):
 
             # 获取商品信息
             items = v.get("itemList", [])
-            item_names = [it.get("itemName", "") for it in items]
+            item_names = [str(it.get("itemName") or "").strip() for it in items]
+            item_names = [name for name in item_names if name]
             item_name_str = " | ".join(item_names)
 
             # 排除检查（用商品名检查分类和IP）

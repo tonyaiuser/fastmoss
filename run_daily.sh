@@ -19,7 +19,12 @@ echo "开始运行: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
 
 # 1. 抓取数据
 echo "[1/4] 抓取数据..." >> "$LOG_FILE"
-$PYTHON tabcut_scraper.py >> "$LOG_FILE" 2>&1
+if ! $PYTHON tabcut_scraper.py >> "$LOG_FILE" 2>&1; then
+    log "   抓取失败，停止后续步骤（不生成报告、不推送旧页面、不发通知）"
+    echo "失败: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
+    echo "========================================" >> "$LOG_FILE"
+    exit 1
+fi
 
 # 2. 生成报告
 echo "[2/4] 生成报告..." >> "$LOG_FILE"
