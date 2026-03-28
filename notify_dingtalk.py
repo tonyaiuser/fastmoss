@@ -17,6 +17,8 @@ from deep_translator import GoogleTranslator
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 
+REGIONS = {"US": "美国", "GB": "英国"}
+
 WEBHOOK_URL = os.environ.get(
     "DINGTALK_WEBHOOK",
     "https://oapi.dingtalk.com/robot/send?access_token=e43a345b41c83d7e0c98f4424418422a7202aac849c949aedc7fb922f6de810f"
@@ -68,18 +70,20 @@ def translate_name(name):
         return str(name)[:40]
 
 
-def build_message():
+def build_message(region="US"):
+    region = (region or "US").upper()
+    region_name = REGIONS.get(region, region)
     today = datetime.now().strftime("%Y-%m-%d")
 
-    df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task1_video_rank_{today}.csv"))
-    df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{today}.csv"))
-    df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{today}.csv"))
-    df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{today}.csv"))
+    df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task1_video_rank_{region}_{today}.csv"))
+    df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
+    df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
+    df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
 
-    report_url = f"{REPORT_BASE_URL}/report_{today}.html"
+    report_url = f"{REPORT_BASE_URL}/report_{region}_{today}.html"
 
     lines = [
-        f"## 巴巴塔选品日报 {today}",
+        f"## 巴巴塔选品日报 {region_name}站 {today}",
         "",
         f"- 视频榜日榜: **{len(df1)}** 条",
         f"- 新素材发现: **{len(df2)}** 条",
@@ -145,7 +149,11 @@ def send_dingtalk(text):
 
 
 if __name__ == "__main__":
-    msg = build_message()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", default="US")
+    args = parser.parse_args()
+    msg = build_message(region=args.region)
     print("--- 推送内容 ---")
     print(msg)
     print("--- 发送中 ---")

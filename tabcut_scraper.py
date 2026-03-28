@@ -4,6 +4,7 @@ TabCut (特看) 自动选品脚本
 4个需求：视频榜日榜、新素材发现、发现视频、商品榜新品
 """
 
+import argparse
 import json
 import os
 import time
@@ -20,6 +21,26 @@ MIN_VIEWS_RECENT = 100_000  # 最近1天内的视频降低门槛
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 HISTORY_DIR = os.path.join(OUTPUT_DIR, "history")
+
+REGIONS = {
+    "US": {"name_zh": "美国", "region_id": 1, "locale": "en-US"},
+    "GB": {"name_zh": "英国", "region_id": 2, "locale": "en-GB"},
+}
+
+
+def get_region_meta(region):
+    region = (region or "US").upper()
+    return REGIONS.get(region, REGIONS["US"])
+
+
+def dated_region_path(prefix, region, today=None, ext="csv"):
+    if today is None:
+        today = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(OUTPUT_DIR, f"{prefix}_{region}_{today}.{ext}")
+
+
+def history_path(name, region):
+    return os.path.join(HISTORY_DIR, f"{name}_{region}.json")
 
 # 排除的分类关键词（中英文）
 EXCLUDED_CATEGORIES = [
@@ -152,10 +173,11 @@ def finalize_scores(df):
 # =============================================================================
 # 需求1: 视频榜 美国 日榜 播放量200K+
 # =============================================================================
-def task1_video_rank(page):
+def task1_video_rank(page, region="US"):
     """需求1: 视频榜日榜"""
+    meta = get_region_meta(region)
     print("\n" + "=" * 60)
-    print("需求1: 视频榜 美国 日榜 播放量 >= 200K")
+    print(f"需求1: 视频榜 {meta['name_zh']} 日榜 播放量 >= 200K")
     print("=" * 60)
 
     all_videos = []
@@ -166,7 +188,7 @@ def task1_video_rank(page):
         print(f"   第 {page_no} 页...", end=" ")
         result = page.evaluate(f"""
             async () => {{
-                const resp = await fetch('/api/ranking/videos?region=US&regionId=1&rankDay=1&itemCategoryId=0&sort=10&pageNo={page_no}&pageSize={page_size}');
+                const resp = await fetch('/api/ranking/videos?region={region}&regionId={meta["region_id"]}&rankDay=1&itemCategoryId=0&sort=10&pageNo={page_no}&pageSize={page_size}');
                 return await resp.json();
             }}
         """)
@@ -241,7 +263,7 @@ def task1_video_rank(page):
         df = finalize_scores(df)
 
     today = datetime.now().strftime("%Y-%m-%d")
-    path = os.path.join(OUTPUT_DIR, f"task1_video_rank_{today}.csv")
+    path = dated_region_path("task1_video_rank", region, today)
     df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"\n   ✓ 需求1完成: {path} ({len(df)} 条)")
     preview(df)
@@ -251,7 +273,7 @@ def task1_video_rank(page):
 # =============================================================================
 # 需求2: 视频榜新素材发现（历史未出现过）
 # =============================================================================
-def task2_new_material(page, task1_df=None):
+def task2_new_material(page, region="US", task1_df=None):
     """需求2: 视频榜新素材发现"""
     print("\n" + "=" * 60)
     print("需求2: 视频榜新素材发现（历史未出现过）")
@@ -259,14 +281,14 @@ def task2_new_material(page, task1_df=None):
 
     # 如果没有 task1 数据，重新获取
     if task1_df is None or task1_df.empty:
-        task1_df = task1_video_rank(page)
+        task1_df = task1_video_rank(page, region=region)
 
     if task1_df.empty:
         print("   ⚠ 无视频数据")
         return pd.DataFrame()
 
     # 加载历史视频 ID
-    history_file = os.path.join(HISTORY_DIR, "video_history.json")
+    history_file = history_path("video_history", region)
     history_ids = set()
     if os.path.exists(history_file):
         with open(history_file, "r") as f:
@@ -278,7 +300,7 @@ def task2_new_material(page, task1_df=None):
     print(f"   新素材: {len(new_df)} 条 (从 {len(task1_df)} 条中)")
 
     today = datetime.now().strftime("%Y-%m-%d")
-    path = os.path.join(OUTPUT_DIR, f"task2_new_material_{today}.csv")
+    path = dated_region_path("task2_new_material", region, today)
     new_df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"   ✓ 需求2完成: {path}")
 
@@ -296,10 +318,11 @@ def task2_new_material(page, task1_df=None):
 # =============================================================================
 # 需求3: 发现视频 美国 近3天 带货 播放量200K+
 # =============================================================================
-def task3_discover_video(page):
+def task3_discover_video(page, region="US"):
     """需求3: 发现视频"""
+    meta = get_region_meta(region)
     print("\n" + "=" * 60)
-    print("需求3: 发现视频 美国 近3天 带货 播放量 >= 200K")
+    print(f"需求3: 发现视频 {meta['name_zh']} 近3天 带货 播放量 >= 200K")
     print("=" * 60)
 
     now = datetime.now()
@@ -319,7 +342,7 @@ def task3_discover_video(page):
                     body: JSON.stringify({{
                         pageNo: {page_no},
                         pageSize: 20,
-                        region: 'US',
+                        region: '{region}',
                         sortField: 'play_count_total',
                         videoCreateTimeBegin: '{begin}',
                         videoCreateTimeEnd: '{end}',
@@ -403,7 +426,7 @@ def task3_discover_video(page):
         df = finalize_scores(df)
 
     today = datetime.now().strftime("%Y-%m-%d")
-    path = os.path.join(OUTPUT_DIR, f"task3_discover_video_{today}.csv")
+    path = dated_region_path("task3_discover_video", region, today)
     df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"\n   ✓ 需求3完成: {path} ({len(df)} 条)")
     preview(df)
@@ -413,7 +436,7 @@ def task3_discover_video(page):
 # =============================================================================
 # 需求4: 商品榜新品发现
 # =============================================================================
-def task4_new_product(page):
+def task4_new_product(page, region="US"):
     """需求4: 商品榜新品发现"""
     print("\n" + "=" * 60)
     print("需求4: 商品榜新品发现（历史未出现过）")
@@ -437,7 +460,7 @@ def task4_new_product(page):
                 "pageSize": 24,
                 "rankType": 1,
                 "bizDate": biz_date,
-                "region": "US",
+                "region": region,
                 "categoryId": "0",
                 "orderType": "1",
                 "sellerType": ""
@@ -508,7 +531,7 @@ def task4_new_product(page):
         df = df.drop_duplicates(subset=["item_id"], keep="first")
 
     # 对比历史
-    history_file = os.path.join(HISTORY_DIR, "product_history.json")
+    history_file = history_path("product_history", region)
     history_ids = set()
     if os.path.exists(history_file):
         with open(history_file, "r") as f:
@@ -519,7 +542,7 @@ def task4_new_product(page):
     print(f"   新商品: {len(new_df)} 条 (从 {len(df)} 条中)")
 
     today = datetime.now().strftime("%Y-%m-%d")
-    path = os.path.join(OUTPUT_DIR, f"task4_new_product_{today}.csv")
+    path = dated_region_path("task4_new_product", region, today)
     new_df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"   ✓ 需求4完成: {path}")
 
@@ -562,8 +585,13 @@ def preview(df, n=10):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", default="US")
+    args = parser.parse_args()
+    region = (args.region or "US").upper()
+    meta = get_region_meta(region)
     print("=" * 60)
-    print("TabCut 自动选品工具")
+    print(f"TabCut 自动选品工具 ({meta['name_zh']} {region})")
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
@@ -575,7 +603,7 @@ def main():
         context = browser.new_context(
             viewport={"width": 1920, "height": 1080},
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            locale="en-US",
+            locale=meta["locale"],
         )
         page = context.new_page()
 
@@ -583,16 +611,16 @@ def main():
             login(page)
 
             # 需求1: 视频榜日榜
-            df1 = task1_video_rank(page)
+            df1 = task1_video_rank(page, region=region)
 
             # 需求2: 新素材发现（基于需求1数据）
-            df2 = task2_new_material(page, task1_df=df1)
+            df2 = task2_new_material(page, region=region, task1_df=df1)
 
             # 需求3: 发现视频
-            df3 = task3_discover_video(page)
+            df3 = task3_discover_video(page, region=region)
 
             # 需求4: 商品榜新品
-            df4 = task4_new_product(page)
+            df4 = task4_new_product(page, region=region)
 
             # 汇总
             print("\n" + "=" * 60)

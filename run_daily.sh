@@ -19,7 +19,7 @@ echo "开始运行: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
 
 # 1. 抓取数据
 echo "[1/4] 抓取数据..." >> "$LOG_FILE"
-if ! $PYTHON tabcut_scraper.py >> "$LOG_FILE" 2>&1; then
+if ! $PYTHON tabcut_scraper.py --region "${REGION:-US}" >> "$LOG_FILE" 2>&1; then
     log "   抓取失败，停止后续步骤（不生成报告、不推送旧页面、不发通知）"
     echo "失败: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
     echo "========================================" >> "$LOG_FILE"
@@ -28,7 +28,7 @@ fi
 
 # 2. 生成报告
 echo "[2/4] 生成报告..." >> "$LOG_FILE"
-$PYTHON generate_report.py >> "$LOG_FILE" 2>&1
+$PYTHON generate_report.py --region "${REGION:-US}" >> "$LOG_FILE" 2>&1
 
 # 3. 推送到 GitHub Pages（失败不影响后续通知）
 echo "[3/4] 推送到 GitHub Pages..." >> "$LOG_FILE"
@@ -70,7 +70,7 @@ set -e
 
 # 4. 钉钉推送
 echo "[4/4] 钉钉推送..." >> "$LOG_FILE"
-$PYTHON notify_dingtalk.py >> "$LOG_FILE" 2>&1
+$PYTHON notify_dingtalk.py --region "${REGION:-US}" >> "$LOG_FILE" 2>&1
 
 echo "完成: $(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"

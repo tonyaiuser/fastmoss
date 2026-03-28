@@ -4,6 +4,7 @@
 功能: 商品名中文翻译、图片展示、列排序、7天过滤、搜索
 """
 
+import argparse
 import os
 import json
 from datetime import datetime
@@ -13,6 +14,8 @@ from deep_translator import GoogleTranslator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+REGIONS = {"US": "美国", "GB": "英国"}
 
 
 def read_csv_safe(path):
@@ -88,22 +91,24 @@ def img_html(url, size=52):
     return f'<img src="{url}" loading="lazy" class="thumb" style="width:{size}px;height:{size}px;" onerror="this.style.display=\'none\'" onclick="showImg(this.src)">'
 
 
-def generate_html():
+def generate_html(region="US"):
+    region = (region or "US").upper()
+    region_name = REGIONS.get(region, region)
     today = datetime.now().strftime("%Y-%m-%d")
 
-    df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task1_video_rank_{today}.csv"))
-    df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{today}.csv"))
-    df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{today}.csv"))
-    df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{today}.csv"))
+    df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task1_video_rank_{region}_{today}.csv"))
+    df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
+    df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
+    df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
 
     if df1.empty:
         for f in sorted(os.listdir(OUTPUT_DIR), reverse=True):
-            if f.startswith("task1_") and f.endswith(".csv"):
+            if f.startswith(f"task1_video_rank_{region}_") and f.endswith(".csv"):
                 df1 = pd.read_csv(os.path.join(OUTPUT_DIR, f))
-                today = f.replace("task1_video_rank_", "").replace(".csv", "")
-                df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{today}.csv"))
-                df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{today}.csv"))
-                df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{today}.csv"))
+                today = f.replace(f"task1_video_rank_{region}_", "").replace(".csv", "")
+                df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
+                df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
+                df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
                 break
 
     # 收集所有需要翻译的商品名
@@ -223,7 +228,7 @@ def generate_html():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>巴巴塔自动选品系统 - {today}</title>
+<title>巴巴塔自动选品系统 - {region_name} - {today}</title>
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#1f2937;font-size:13px}}
@@ -306,7 +311,7 @@ td,th{{padding:6px 6px;font-size:11px}}
 <body>
 <div class="header">
 <h1>巴巴塔自动选品系统</h1>
-<div class="sub">数据日期: {today} | 生成: {datetime.now().strftime("%H:%M:%S")} | 地区: 美国 (US)</div>
+<div class="sub">数据日期: {today} | 生成: {datetime.now().strftime("%H:%M:%S")} | 地区: {region_name} ({region})</div>
 </div>
 <div class="tabs">
 <div class="tab active" onclick="sw(0)">视频榜日榜 <span class="badge">{len(df1)}</span></div>
@@ -428,26 +433,27 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
 </body>
 </html>"""
 
-    output_path = os.path.join(OUTPUT_DIR, f"report_{today}.html")
+    output_path = os.path.join(OUTPUT_DIR, f"report_{region}_{today}.html")
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
     # 同时输出到 docs/ 目录供 GitHub Pages 使用
     docs_dir = os.path.join(BASE_DIR, "docs")
     os.makedirs(docs_dir, exist_ok=True)
-    docs_path = os.path.join(docs_dir, f"report_{today}.html")
+    docs_path = os.path.join(docs_dir, f"report_{region}_{today}.html")
     with open(docs_path, "w", encoding="utf-8") as f:
         f.write(html)
 
     # 生成 index.html 自动跳转到最新报告
-    index_html = f"""<!DOCTYPE html>
+    if region == "US":
+        index_html = f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;url=report_{today}.html">
+<meta http-equiv="refresh" content="0;url=report_{region}_{today}.html">
 <title>巴巴塔自动选品系统</title>
 </head><body><p>正在跳转到最新报告...</p>
-<a href="report_{today}.html">点击这里</a></body></html>"""
-    with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
-        f.write(index_html)
+<a href="report_{region}_{today}.html">点击这里</a></body></html>"""
+        with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
+            f.write(index_html)
 
     print(f"✓ 报告已生成: {output_path}")
     print(f"✓ Pages 报告: {docs_path}")
@@ -455,6 +461,9 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
 
 
 if __name__ == "__main__":
-    path = generate_html()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", default="US")
+    args = parser.parse_args()
+    path = generate_html(region=args.region)
     import subprocess
     subprocess.run(["open", path])
