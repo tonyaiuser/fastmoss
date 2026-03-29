@@ -445,18 +445,17 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
         f.write(html)
 
     # 生成 index.html：自动展示最新 US / GB 报告入口
-    if region == "US":
-        latest_us = ""
-        latest_gb = ""
-        for name in sorted(os.listdir(docs_dir), reverse=True):
-            if not latest_us and name.startswith("report_US_") and name.endswith(".html"):
-                latest_us = name
-            if not latest_gb and name.startswith("report_GB_") and name.endswith(".html"):
-                latest_gb = name
-            if latest_us and latest_gb:
-                break
+    latest_us = ""
+    latest_gb = ""
+    for name in sorted(os.listdir(docs_dir), reverse=True):
+        if not latest_us and name.startswith("report_US_") and name.endswith(".html"):
+            latest_us = name
+        if not latest_gb and name.startswith("report_GB_") and name.endswith(".html"):
+            latest_gb = name
+        if latest_us and latest_gb:
+            break
 
-        index_html = f"""<!DOCTYPE html>
+    index_html = f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>巴巴塔自动选品系统</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;padding:32px;background:#f6f8fb;color:#1f2937;">
@@ -467,8 +466,8 @@ document.addEventListener('DOMContentLoaded',()=>{{document.querySelectorAll('.t
   <li><a href="{latest_gb or '#'}">英国站最新报告</a></li>
 </ul>
 </body></html>"""
-        with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
-            f.write(index_html)
+    with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(index_html)
 
     print(f"✓ 报告已生成: {output_path}")
     print(f"✓ Pages 报告: {docs_path}")
