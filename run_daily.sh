@@ -31,6 +31,13 @@ run_one_region() {
     echo "[3/4] 推送到 GitHub Pages (${REGION})..." >> "$LOG_FILE"
     set +e
     export GIT_TERMINAL_PROMPT=0
+
+    git fetch origin main >> "$LOG_FILE" 2>&1
+    git_fetch_status=$?
+    if [ $git_fetch_status -ne 0 ]; then
+        log "   Git fetch 失败，可能是认证或网络问题；继续尝试本地提交流程"
+    fi
+
     git add docs/ >> "$LOG_FILE" 2>&1
     git_add_docs_status=$?
     git add -u >> "$LOG_FILE" 2>&1
@@ -42,17 +49,32 @@ run_one_region() {
         if git diff --cached --quiet; then
             log "   无变更，跳过提交"
         else
-            git commit -m "Daily report ${REGION} $(date +%Y-%m-%d)" >> "$LOG_FILE" 2>&1
-            git_commit_status=$?
-            if [ $git_commit_status -ne 0 ]; then
-                log "   Git commit 失败，跳过 GitHub Pages 推送，但继续执行通知"
+            git pull --rebase origin main >> "$LOG_FILE" 2>&1
+            git_rebase_before_commit_status=$?
+            if [ $git_rebase_before_commit_status -ne 0 ]; then
+                log "   Git rebase 失败，跳过 GitHub Pages 推送，但继续执行通知"
             else
-                git push origin main >> "$LOG_FILE" 2>&1
-                git_push_status=$?
-                if [ $git_push_status -ne 0 ]; then
-                    log "   Git push 失败（本机 git 凭据未生效或远端认证失败），已跳过，但不影响后续钉钉推送"
+                git commit -m "Daily report ${REGION} $(date +%Y-%m-%d)" >> "$LOG_FILE" 2>&1
+                git_commit_status=$?
+                if [ $git_commit_status -ne 0 ]; then
+                    log "   Git commit 失败，跳过 GitHub Pages 推送，但继续执行通知"
                 else
-                    log "   GitHub Pages 推送成功"
+                    git push origin main >> "$LOG_FILE" 2>&1
+                    git_push_status=$?
+                    if [ $git_push_status -ne 0 ]; then
+                        log "   首次 Git push 失败，尝试 fetch + rebase + 重试一次"
+                        git fetch origin main >> "$LOG_FILE" 2>&1
+                        git pull --rebase origin main >> "$LOG_FILE" 2>&1
+                        git push origin main >> "$LOG_FILE" 2>&1
+                        git_push_retry_status=$?
+                        if [ $git_push_retry_status -ne 0 ]; then
+                            log "   Git push 重试仍失败（远端更新/认证失败），已跳过，但不影响后续钉钉推送"
+                        else
+                            log "   GitHub Pages 推送成功（重试后成功）"
+                        fi
+                    else
+                        log "   GitHub Pages 推送成功"
+                    fi
                 fi
             fi
         fi
