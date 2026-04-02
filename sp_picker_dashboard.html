@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SP 集团选品看板</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text2: #6b7280;
+    --text3: #9ca3af;
+    --accent: #6366f1;
+    --accent-light: #eef2ff;
+    --green: #10b981;
+    --green-light: #ecfdf5;
+    --amber: #f59e0b;
+    --amber-light: #fffbeb;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --blue: #3b82f6;
+    --blue-light: #eff6ff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-hover: 0 8px 25px rgba(0,0,0,.12);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%); color: white; padding: 20px 24px 24px; }
+  .header-inner { max-width: 1280px; margin: 0 auto; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .header h1 span.logo { font-size: 1.6rem; }
+  .header-meta { font-size: 0.8rem; opacity: .7; margin-top: 4px; }
+  .stats-row { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .stat-pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 14px; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; }
+  .stat-pill strong { font-weight: 700; }
+
+  /* Controls */
+  .controls { background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .controls-inner { max-width: 1280px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .search-wrap { flex: 1; min-width: 180px; position: relative; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+  .search-input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; outline: none; transition: border .15s; background: var(--bg); }
+  .search-input:focus { border-color: var(--accent); background: white; }
+  .sort-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer; background: var(--bg); color: var(--text); }
+  .cat-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .cat-tab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; background: var(--bg); color: var(--text2); transition: all .15s; }
+  .cat-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .cat-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Main */
+  .main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  .section-title { font-size: 1rem; font-weight: 600; color: var(--text2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title span.count { background: var(--accent-light); color: var(--accent); padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+  /* Card */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: box-shadow .2s, transform .2s; box-shadow: var(--shadow); cursor: default; }
+  .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .card-img { width: 100%; height: 180px; object-fit: cover; display: block; background: linear-gradient(135deg, #e0e7ff, #f0f4ff); }
+  .card-img-placeholder { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 100%); }
+  .card-img.loaded { background: #f8f8f8; }
+  .card-body { padding: 14px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .card-title { font-size: 0.875rem; font-weight: 600; line-height: 1.4; color: var(--text); flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .score-badge { flex-shrink: 0; font-size: 0.8rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .score-high { background: var(--green-light); color: var(--green); }
+  .score-mid { background: var(--amber-light); color: var(--amber); }
+  .score-low { background: var(--blue-light); color: var(--blue); }
+  .card-cn { font-size: 0.78rem; color: var(--text2); margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .meta-chip { display: flex; align-items: center; gap: 4px; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+  .chip-sites { background: #f1f5f9; color: #475569; }
+  .chip-flagship { background: #fef3c7; color: #b45309; }
+  .chip-price { background: #f0fdf4; color: #15803d; }
+  .chip-date { background: #faf5ff; color: #7c3aed; }
+  .flagship-list { font-size: 0.72rem; color: var(--text3); margin-bottom: 10px; }
+  .flagship-list strong { color: var(--amber); }
+  .card-actions { display: flex; gap: 8px; }
+  .btn-sample { flex: 1; text-align: center; padding: 7px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-decoration: none; background: var(--accent); color: white; transition: background .15s; border: none; cursor: pointer; }
+  .btn-sample:hover { background: #4f46e5; }
+  .btn-sites { padding: 7px 10px; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--border); background: var(--bg); color: var(--text2); cursor: pointer; transition: background .15s; }
+  .btn-sites:hover { background: var(--card); }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto; }
+  .modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+  .modal-site-list { list-style: none; }
+  .modal-site-list li { padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; display: flex; align-items: center; justify-content: space-between; }
+  .modal-site-list li:nth-child(odd) { background: var(--bg); }
+  .modal-site-list li a { color: var(--accent); text-decoration: none; font-size: 0.8rem; }
+  .modal-site-list li a:hover { text-decoration: underline; }
+  .flagship-tag { font-size: 0.7rem; padding: 2px 6px; background: #fef3c7; color: #b45309; border-radius: 4px; font-weight: 600; }
+  .modal-close { margin-top: 16px; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; font-size: 0.875rem; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+  /* Rank badge */
+  .rank { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+  .card-img-wrap { position: relative; }
+  .rank-1 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .rank-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+  .rank-3 { background: linear-gradient(135deg, #b45309, #92400e); }
+
+  @media (max-width: 640px) {
+    .main { padding: 16px; }
+    .controls-inner { padding: 10px 16px; }
+    .header { padding: 16px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card-img, .card-img-placeholder { height: 140px; }
+  }
+  @media (max-width: 400px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <h1><span class="logo">🎯</span> SP 集团选品看板</h1>
+        <div class="header-meta">数据来源：SP 热榜 · 最近 3 天汇总 · 2026-03-31 ～ 2026-04-02</div>
+      </div>
+      <div style="font-size:0.8rem;opacity:.7;">v1.0 · <span id="updated-time"></span></div>
+    </div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-pill">⚡ 正在加载...</div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="controls-inner">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
+      <input class="search-input" id="search" type="text" placeholder="搜索商品标题 / 关键词..." oninput="render()">
+    </div>
+    <select class="sort-select" id="sort" onchange="render()">
+      <option value="score">按评分降序</option>
+      <option value="sites">按铺货数降序</option>
+      <option value="flagship">按旗舰命中降序</option>
+      <option value="price_asc">按价格升序</option>
+      <option value="price_desc">按价格降序</option>
+    </select>
+    <div class="cat-tabs" id="cat-tabs"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="section-title">
+    Top 产品列表 <span class="count" id="result-count">0</span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none;">
+    <div class="empty-icon">🔍</div>
+    <div>没有找到匹配的商品</div>
+    <div style="font-size:.8rem;margin-top:6px;color:#9ca3af;">试试其他关键词或清空筛选</div>
+  </div>
+</div>
+
+<!-- Sites Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modal-title">铺货站点</h3>
+    <ul class="modal-site-list" id="modal-sites"></ul>
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">关闭</button>
+  </div>
+</div>
+
+<script>
+const RAW_DATA = [
+  {
+    "handle": "motorcycle-anti-theft-alarm-disc-lock",
+    "title": "Motorcycle Anti-theft Alarm Disc Lock",
+    "price": "21.90",
+    "published_at": "2026-03-30T10:32:21+08:00",
+    "sites": [
+      "britneed.com",
+      "copensunny.com",
+      "biaotic.com",
+      "sowhatbuy.com",
+      "yasuxi.com",
+      "savemorer.net",
+      "sowhatsale.com",
+      "leteimall.com",
+      "surebrit.com",
+      "cairoe.com",
+      "licaberry.com",
+      "dreanno.com",
+      "relaxrich.com",
+      "comejune.com",
+      "choosemuc.com",
+      "copenrain.com",
+      "comepew.com",
+      "hometoolix.com"
+    ],
+    "sites_count": 18,
+    "flagship_hits": [
+      "britneed.com",
+      "copensunny.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/motorcycle-anti-theft-alarm-disc-lock",
+    "score": 26,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "yarn-love-mug",
+    "title": "🔥LAST DAY SALE 50% OFF!!🏆Flash Sale⚡ 50K+ SOLD! Almost Gone💥Yarn Love Mug, Gift For Crafters And Creative Souls",
+    "price": "11.99",
+    "published_at": "2026-03-31",
+    "sites": [
+      "loungon.com",
+      "stardusst.com",
+      "modamissy.com",
+      "floweraup.com",
+      "copensunny.com",
+      "meteor1776.com",
+      "eurshap.com",
+      "yasuxi.com",
+      "behene.com",
+      "erielly.com",
+      "occur-top.com",
+      "colody.fr",
+      "luovetop.com",
+      "seecion.com",
+      "dreanno.com",
+      "julyandme.com",
+      "relaxrich.com",
+      "nnice.uk"
+    ],
+    "sites_count": 18,
+    "flagship_hits": [
+      "loungon.com",
+      "copensunny.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://loungon.com/products/yarn-love-mug",
+    "score": 26,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "electricity-saving-box",
+    "title": "🔥55% OFF🔥Household Electricity Saving Box-Solve Your Battery Anxiety！！",
+    "price": "8.99",
+    "published_at": "2026-04-01T03:30:18-08:00",
+    "sites": [
+      "shimmer07.com",
+      "londonnk.com",
+      "rouvenor.com",
+      "copensunny.com",
+      "kingwwy.com",
+      "kariney.com",
+      "occur-top.com",
+      "approchu.com"
+    ],
+    "sites_count": 8,
+    "flagship_hits": [
+      "shimmer07.com",
+      "londonnk.com",
+      "rouvenor.com",
+      "copensunny.com"
+    ],
+    "flagship_count": 4,
+    "sample_url": "https://shimmer07.com/products/electricity-saving-box",
+    "score": 24,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "14-inch-heavy-duty-canvas-tool-bag",
+    "title": "14-Inch Heavy-Duty Canvas Tool Bag",
+    "price": "20.99",
+    "published_at": "2026-03-30T02:16:43+01:00",
+    "sites": [
+      "britneed.com",
+      "loungon.com",
+      "dbhgy.com",
+      "roseionly.com",
+      "biaotic.com",
+      "bling-furnitureshop.com",
+      "newbeew.com",
+      "surebrit.com",
+      "cairoe.com",
+      "firewalky.com",
+      "mfboutiquestore.tools",
+      "dreanno.com",
+      "comejune.com",
+      "chatubuy.com",
+      "hometoolix.com"
+    ],
+    "sites_count": 15,
+    "flagship_hits": [
+      "britneed.com",
+      "loungon.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/14-inch-heavy-duty-canvas-tool-bag",
+    "score": 23,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "solar-powered-ptz-security-camera-1",
+    "title": "🥳2026 HOT SALE🥳Solar-Powered PTZ Security Camera",
+    "price": "89.99",
+    "published_at": "2026-03-30T16:32:29+08:00",
+    "sites": [
+      "loungon.com",
+      "bebuyby.com",
+      "sempornai.com",
+      "dbhgy.com",
+      "roseionly.com",
+      "sowhathow.com",
+      "savemorer.net",
+      "anibiy.com",
+      "newbeew.com",
+      "homebbc.net",
+      "eclire.com",
+      "aimtoyou.com"
+    ],
+    "sites_count": 12,
+    "flagship_hits": [
+      "loungon.com",
+      "bebuyby.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://loungon.com/products/solar-powered-ptz-security-camera-1",
+    "score": 20,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "thickened-soft-silicone-multi-purpose-broom",
+    "title": "✨ Thickened Soft Silicone Multi-Purpose Broom! 🧹",
+    "price": "15.99",
+    "published_at": "2026-03-30T11:42:10+08:00",
+    "sites": [
+      "londonnk.com",
+      "rouvenor.com",
+      "meteor1776.com",
+      "eurshap.com",
+      "leteimall.com",
+      "sandogoo.com",
+      "matorioo.com",
+      "relaxrich.com",
+      "kissews.com",
+      "hometoolix.com"
+    ],
+    "sites_count": 10,
+    "flagship_hits": [
+      "londonnk.com",
+      "rouvenor.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://londonnk.com/products/thickened-soft-silicone-multi-purpose-broom",
+    "score": 18,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "elegant-peep-toe-buckle-heeled-sandals",
+    "title": "👡 50 % DE RÉDUCTION ! ✨ Sandales élégantes à bout ouvert et talon à boucles – Raffinées, confortables et parfaites pour toutes les occasions 🌸",
+    "price": "39.99",
+    "published_at": "2026-03-30T12:11:32+02:00",
+    "sites": [
+      "copensunny.com",
+      "sempornai.com",
+      "yasuxi.com",
+      "jeaniny.com",
+      "obtenirie.com",
+      "swarous.com",
+      "homebbc.net",
+      "rablaisie.com",
+      "hestiy.com",
+      "cinihi.com",
+      "anglick.com",
+      "choosemuc.com",
+      "alivelydoll.com",
+      "olvidosa.com"
+    ],
+    "sites_count": 14,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://copensunny.com/products/elegant-peep-toe-buckle-heeled-sandals",
+    "score": 18,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "portablk",
+    "title": "⏳Time-Limited Special⏰Portable Oral Irrigator Water Flosser",
+    "price": "24.99",
+    "published_at": "2026-04-01T02:26:38-08:00",
+    "sites": [
+      "londonnk.com",
+      "rouvenor.com",
+      "eurshap.com",
+      "kingwwy.com",
+      "voalsz.com",
+      "newbeew.com",
+      "choosemuc.com"
+    ],
+    "sites_count": 7,
+    "flagship_hits": [
+      "londonnk.com",
+      "rouvenor.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://londonnk.com/products/portablk",
+    "score": 15,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "houstonget-car-interior-cleaner",
+    "title": "Spray dégraissant multi-usages",
+    "price": "16.99",
+    "published_at": "2026-03-31T03:31:36-06:00",
+    "sites": [
+      "copensunny.com",
+      "bebuyby.com",
+      "yasuxi.com",
+      "kingwwy.com",
+      "anibiy.com",
+      "erielly.com"
+    ],
+    "sites_count": 6,
+    "flagship_hits": [
+      "copensunny.com",
+      "bebuyby.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://copensunny.com/products/houstonget-car-interior-cleaner",
+    "score": 14,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "non-slip-thick-sole-cloud-slides-for-men",
+    "title": "🌞🩴New arrival 40% OFF!🏖️Non-Slip Thick Sole Cloud Slides for Men",
+    "price": "29.99",
+    "published_at": "2026-03-30T05:29:59-04:00",
+    "sites": [
+      "roseionly.com",
+      "sowhathow.com",
+      "sowhatsale.com",
+      "forubom.com",
+      "jeaniny.com",
+      "cairoe.com",
+      "obtenirie.com",
+      "rablaisie.com",
+      "dreanno.com",
+      "welfareis.com",
+      "anglick.com",
+      "choosemuc.com",
+      "shopowant.com",
+      "chatubuy.com"
+    ],
+    "sites_count": 14,
+    "flagship_hits": [],
+    "flagship_count": 0,
+    "sample_url": "https://roseionly.com/products/non-slip-thick-sole-cloud-slides-for-men",
+    "score": 14,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "ipl-ice-cooling-hair-removal-device",
+    "title": "✅ 49% OFF – don't miss out! ⏰✨IPL Ice-Cooling Hair Removal Device💎A little pricey, but worth every penny. 💎",
+    "price": "59.99",
+    "published_at": "2026-03-30T16:46:15+08:00",
+    "sites": [
+      "britneed.com",
+      "roseionly.com",
+      "sowhatbuy.com",
+      "licaberry.com",
+      "relaxrich.com",
+      "beautidollee.com",
+      "aimtoyou.com",
+      "copenrain.com",
+      "patiyu.com"
+    ],
+    "sites_count": 9,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/ipl-ice-cooling-hair-removal-device",
+    "score": 13,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "non-stick-carbon-steel-baking-pan",
+    "title": "🔥 Bestseller 2026 | Carbon Steel Baking Tray Non-Stick | Easy Release & Quick Clean 🍳【-50% This Week】",
+    "price": "13.99",
+    "published_at": "2026-03-30T02:33:53-08:00",
+    "sites": [
+      "britneed.com",
+      "shimmer07.com",
+      "detroland.com",
+      "newbeew.com",
+      "locatshop.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "britneed.com",
+      "shimmer07.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/non-stick-carbon-steel-baking-pan",
+    "score": 13,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "car-headlight-repair-fluid",
+    "title": "🚗 50% OFF NOW! 🔆Professional Car Headlight Restoration Kit",
+    "price": "12.99",
+    "published_at": "2026-03-30T02:01:48-08:00",
+    "sites": [
+      "bebuyby.com",
+      "sempornai.com",
+      "meteor1776.com",
+      "newbeew.com",
+      "erielly.com",
+      "matorioo.com",
+      "homebbc.net",
+      "scomeri.com",
+      "relaxrich.com"
+    ],
+    "sites_count": 9,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://bebuyby.com/products/car-headlight-repair-fluid",
+    "score": 13,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "drohsern",
+    "title": "49 % Rabatt diese Woche! 🎉Die App-gesteuerte Oberflächendrohne für die Erkundung von Gewässern",
+    "price": "39.99",
+    "published_at": "2026-03-30T04:54:18+02:00",
+    "sites": [
+      "hairstudiov.com",
+      "copensunny.com",
+      "perlolab.com",
+      "britifys.com",
+      "shopingmally.com",
+      "colody.fr",
+      "dreanno.com",
+      "choosemuc.com"
+    ],
+    "sites_count": 8,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://hairstudiov.com/products/drohsern",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "urlung-1",
+    "title": "💐50% OFF ! Versatile Wire Puller – One Tool for All Your Wiring Projects 🛠️📦【Limited Offer】",
+    "price": "24.99",
+    "published_at": "2026-03-30T10:41:16+08:00",
+    "sites": [
+      "britneed.com",
+      "sempornai.com",
+      "anrdre.com",
+      "surebrit.com",
+      "shopingmally.com",
+      "obtenirie.com",
+      "licaberry.com",
+      "homebbc.net"
+    ],
+    "sites_count": 8,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/urlung-1",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "rechargeable-portable-jet-fan",
+    "title": "Rechargeable Portable Jet Fan",
+    "price": "22.99",
+    "published_at": "2026-03-31T11:05:45+08:00",
+    "sites": [
+      "loungon.com",
+      "anrdre.com",
+      "meteor1776.com",
+      "behene.com",
+      "focoor.com",
+      "syytca.com",
+      "matorioo.com",
+      "helsinkitag.com"
+    ],
+    "sites_count": 8,
+    "flagship_hits": [
+      "loungon.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://loungon.com/products/rechargeable-portable-jet-fan",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "lean-save-dt",
+    "title": "🧳 50% OFF HOT DEAL ! ⚡ Pack of 6 Compression Bags for USB Electric Vacuum Cleaner – Space-Saving Storage, Airtight Seal, Reusable & Durable 🌀",
+    "price": "16.99",
+    "published_at": "2026-03-30T15:51:49+08:00",
+    "sites": [
+      "boniss.com",
+      "copensunny.com",
+      "yasuxi.com",
+      "voalsz.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "boniss.com",
+      "copensunny.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://boniss.com/products/lean-save-dt",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "steamer-1",
+    "title": "🔥Garment steamer for clothes, 👔hand steamer & iron 2 in 1, 15-second rapid heating, large control panel, suitable for worldwide travel💨",
+    "price": "22.99",
+    "published_at": "2026-03-30",
+    "sites": [
+      "britneed.com",
+      "londonnk.com",
+      "newbeew.com",
+      "comebybuy.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "britneed.com",
+      "londonnk.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/steamer-1",
+    "score": 12,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "chu",
+    "title": "🧹 50% OFF! ✨ Retractable Dust Brush - Telescopic Design for Cleaning Hard-to-Reach Spaces (Furniture/Appliances/Car) 🚗🔍",
+    "price": "19.99",
+    "published_at": "2026-03-31T19:59:54-08:00",
+    "sites": [
+      "rouvenor.com",
+      "copensunny.com",
+      "anibiy.com",
+      "choosemuc.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "rouvenor.com",
+      "copensunny.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://rouvenor.com/products/chu",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "asf-57",
+    "title": "Tuyau de nettoyage à haute pression pour égouts avec buse",
+    "price": "21.99",
+    "published_at": "2026-03-31T11:33:06+08:00",
+    "sites": [
+      "copensunny.com",
+      "bebuyby.com",
+      "sowhathow.com",
+      "fortunelw.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "copensunny.com",
+      "bebuyby.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://copensunny.com/products/asf-57",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "flattering-square-neck-maxi-dress",
+    "title": "Flattering Square Neck Maxi Dress",
+    "price": "54.00",
+    "published_at": "2026-03-31T15:52:36+08:00",
+    "sites": [
+      "outdhaven.com",
+      "savemorer.net",
+      "sueean.com",
+      "jeaniny.com",
+      "gofiveus.com",
+      "rablaisie.com",
+      "lilacois.com",
+      "canadaify.com",
+      "aimtoyou.com",
+      "patiyu.com",
+      "shopetei.com",
+      "kissews.com"
+    ],
+    "sites_count": 12,
+    "flagship_hits": [],
+    "flagship_count": 0,
+    "sample_url": "https://outdhaven.com/products/flattering-square-neck-maxi-dress",
+    "score": 12,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "rechargeable-electric-ear-cleaner-kit",
+    "title": "Rechargeable Electric Ear Cleaner Kit",
+    "price": "49.99",
+    "published_at": "2026-03-31T21:31:07-06:00",
+    "sites": [
+      "britneed.com",
+      "sowhatbuy.com",
+      "whatyam.com",
+      "newbeew.com",
+      "surebrit.com",
+      "fupcap.com",
+      "shopowant.com"
+    ],
+    "sites_count": 7,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/rechargeable-electric-ear-cleaner-kit",
+    "score": 11,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "tire-wax-1",
+    "title": "✨ Tire wax – restores black gloss, blocks UV, repels dirt. Easy & quick!",
+    "price": "8.99",
+    "published_at": "2026-03-30",
+    "sites": [
+      "britneed.com",
+      "loungon.com",
+      "hosinvest.com"
+    ],
+    "sites_count": 3,
+    "flagship_hits": [
+      "britneed.com",
+      "loungon.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/tire-wax-1",
+    "score": 11,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "2-in7fto",
+    "title": "📱60% OFF NOW! 🔥【Plug and Play! Wireless Connection 🔥 2-in-1 Wireless Adapter - iPhone & Android Auto, turn your car into a smart cinema in seconds】",
+    "price": "19.99",
+    "published_at": "2026-03-30T21:19:20+08:00",
+    "sites": [
+      "shimmer07.com",
+      "loungon.com",
+      "kariney.com"
+    ],
+    "sites_count": 3,
+    "flagship_hits": [
+      "shimmer07.com",
+      "loungon.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://shimmer07.com/products/2-in7fto",
+    "score": 11,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "analatches-uz-1",
+    "title": "⌚ 49% OFF NOW! 🪖 Men‘s Military Watch – Analog-Digital Display, Waterproof & Shock-Resistant 🛡️",
+    "price": "26.99",
+    "published_at": "2026-03-30T00:35:03-08:00",
+    "sites": [
+      "loungon.com",
+      "floweraup.com",
+      "sowhatbuy.com",
+      "sowhathow.com",
+      "newbeew.com",
+      "obtenirie.com",
+      "rablaisie.com"
+    ],
+    "sites_count": 7,
+    "flagship_hits": [
+      "loungon.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://loungon.com/products/analatches-uz-1",
+    "score": 11,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "mens-tactits",
+    "title": "Men's Tactical Cargo Pants with Multi-Pockets",
+    "price": "27.79",
+    "published_at": "2026-03-30T17:21:15+08:00",
+    "sites": [
+      "loungon.com",
+      "outdhaven.com",
+      "hoolyy.com",
+      "gotesale.com",
+      "gofiveus.com",
+      "lilacois.com",
+      "comenem.com"
+    ],
+    "sites_count": 7,
+    "flagship_hits": [
+      "loungon.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://loungon.com/products/mens-tactits",
+    "score": 11,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "msmw",
+    "title": "⌚ 50% OFF & Free Shipping NOW! 🪖 Men‘s Military Watch – Analog-Digital Display, Waterproof & Shock-Resistant 🛡️",
+    "price": "29.99",
+    "published_at": "2026-03-31T02:51:05-06:00",
+    "sites": [
+      "bebuyby.com",
+      "leteimall.com",
+      "whatyam.com",
+      "erielly.com",
+      "fupcap.com",
+      "kyayu.com",
+      "aimtoyou.com"
+    ],
+    "sites_count": 7,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://bebuyby.com/products/msmw",
+    "score": 11,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "strapless-support-shaping-bra",
+    "title": "🥳2026 HOT SALE🥳💞50K+ SOLD!💥💞👙 50% OFF! Strapless Push-Up Bra – 360° non-slip, wireless & breathable. Stays secure for hours. Perfect under off-shoulder tops & backless dresses. 🛡️✨",
+    "price": "12.99",
+    "published_at": "2026-03-30",
+    "sites": [
+      "britneed.com",
+      "loungon.com",
+      "cinihi.com"
+    ],
+    "sites_count": 3,
+    "flagship_hits": [
+      "britneed.com",
+      "loungon.com"
+    ],
+    "flagship_count": 2,
+    "sample_url": "https://britneed.com/products/strapless-support-shaping-bra",
+    "score": 11,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "lhfabgefty",
+    "title": "Thickened Soft Silicone Multi-Purpose Broom",
+    "price": "14.90",
+    "published_at": "2026-03-31",
+    "sites": [
+      "britneed.com",
+      "voalsz.com",
+      "newbeew.com",
+      "newbeeoo.com",
+      "sweorou.com",
+      "shopowant.com"
+    ],
+    "sites_count": 6,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/lhfabgefty",
+    "score": 10,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "kit-per-la-rimozione-del-cerume-2-in-1-aggiornato-spray-d-acqua-ricaricabile-4-livelli-di-pressione-regolabili-e-serbatoio-raccogligemma-integrato-sistema-di-irrigazione-sicuro-per-una-pulizia-del-condotto-uditivo-senza-dolore",
+    "title": "Appareil de rinçage auriculaire électrique – Réglable en 5 niveaux pour un nettoyage efficace du conduit auditif à la maison",
+    "price": "59.99",
+    "published_at": "2026-03-31T10:57:31+08:00",
+    "sites": [
+      "copensunny.com",
+      "yasuxi.com",
+      "kingwwy.com",
+      "groemont.com",
+      "comejune.com",
+      "choosemuc.com"
+    ],
+    "sites_count": 6,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://copensunny.com/products/kit-per-la-rimozione-del-cerume-2-in-1-aggiornato-spray-d-acqua-ricaricabile-4-livelli-di-pressione-regolabili-e-serbatoio-raccogligemma-integrato-sistema-di-irrigazione-sicuro-per-una-pulizia-del-condotto-uditivo-senza-dolore",
+    "score": 10,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "watchesy",
+    "title": "Montre militaire étanche pour homme – analogique-numérique, en acier inoxydable et résistante aux chocs 🛡️",
+    "price": "31.99",
+    "published_at": "2026-03-30T14:34:39+08:00",
+    "sites": [
+      "copensunny.com",
+      "cinihi.com",
+      "choosemuc.com",
+      "alivelydoll.com",
+      "olvidosa.com",
+      "shopowant.com"
+    ],
+    "sites_count": 6,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://copensunny.com/products/watchesy",
+    "score": 10,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "portable-ultrasonic-fruit-vegetable-washer",
+    "title": "Portable Ultrasonic Fruit & Vegetable Washer",
+    "price": "19.99",
+    "published_at": "2026-03-31T16:45:19+08:00",
+    "sites": [
+      "bebuyby.com",
+      "meteor1776.com",
+      "scomeri.com",
+      "dreanno.com",
+      "helsinkitag.com",
+      "fortunelw.com"
+    ],
+    "sites_count": 6,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://bebuyby.com/products/portable-ultrasonic-fruit-vegetable-washer",
+    "score": 10,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "powerful-wheel-cleaning-refurbish-wax",
+    "title": "✨ Tire wax – restores black gloss, blocks UV, repels dirt. Easy & quick! 🚗",
+    "price": "8.99",
+    "published_at": "2026-03-28",
+    "sites": [
+      "floweraup.com",
+      "outdhaven.com",
+      "houstape.com",
+      "behene.com",
+      "sowhatsale.com",
+      "gofiveus.com",
+      "scomeri.com",
+      "flowoon.com",
+      "helsinkitag.com",
+      "fortunelw.com"
+    ],
+    "sites_count": 10,
+    "flagship_hits": [],
+    "flagship_count": 0,
+    "sample_url": "https://floweraup.com/products/powerful-wheel-cleaning-refurbish-wax",
+    "score": 10,
+    "date": "2026-03-31"
+  },
+  {
+    "handle": "gentle-and-non-irritating-hair-removal-cream",
+    "title": "Gentle and Non-Irritating Hair Removal Cream|Limited-time offer🎁",
+    "price": "12.90",
+    "published_at": "2026-03-30T19:44:54+08:00",
+    "sites": [
+      "britneed.com",
+      "voalsz.com",
+      "erielly.com",
+      "approchu.com",
+      "shopowant.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/gentle-and-non-irritating-hair-removal-cream",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "solar-powered-ptz-security-camera",
+    "title": "Solar-Powered PTZ Security Camera",
+    "price": "89.99",
+    "published_at": "2026-03-31T14:18:34+08:00",
+    "sites": [
+      "britneed.com",
+      "eurshap.com",
+      "syytca.com",
+      "helsinkitag.com",
+      "chatubuy.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/solar-powered-ptz-security-camera",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "womens-casual-top-wide-leg-pants-set",
+    "title": "Women's Casual Top & Wide-Leg Pants Set",
+    "price": "45.98",
+    "published_at": "2026-03-30T14:33:20+08:00",
+    "sites": [
+      "loungon.com",
+      "whatyam.com",
+      "gofiveus.com",
+      "fupcap.com",
+      "licaberry.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "loungon.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://loungon.com/products/womens-casual-top-wide-leg-pants-set",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "heavy-duty-fence-post-repair-kit",
+    "title": "🔥Hot sale -50% OFF🛠️Heavy-Duty Fence Post Repair Kit | Strong Fix for Broken & Leaning Posts",
+    "price": "21.99",
+    "published_at": "2026-03-30T16:44:55+08:00",
+    "sites": [
+      "ouisyes.com",
+      "bebuyby.com",
+      "clarioy.com",
+      "eclire.com",
+      "hestiy.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://ouisyes.com/products/heavy-duty-fence-post-repair-kit",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "houstonget-high-speed-hair-dryer",
+    "title": "🔥Promotion exceptionnelle🔥Nouveau ventilateur puissant et ultra-rapide",
+    "price": "39.99",
+    "published_at": "2026-03-31T19:42:21+08:00",
+    "sites": [
+      "copensunny.com",
+      "yasuxi.com",
+      "kingwwy.com",
+      "behene.com",
+      "anibiy.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://copensunny.com/products/houstonget-high-speed-hair-dryer",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "rq-3",
+    "title": "Aspirateur sans fil pour voiture",
+    "price": "29.99",
+    "published_at": "2026-03-30T16:21:00+08:00",
+    "sites": [
+      "copensunny.com",
+      "yasuxi.com",
+      "choosemuc.com",
+      "shopowant.com",
+      "luluilo.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://copensunny.com/products/rq-3",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "sandal-1",
+    "title": "🎁New Arrival 50% OFF💥Women's Fashion Breathable Wedge Sandals with Side Zipper Closure",
+    "price": "22.99",
+    "published_at": "2026-03-30T20:20:04-05:00",
+    "sites": [
+      "bebuyby.com",
+      "houstape.com",
+      "alivelydoll.com",
+      "patiyu.com",
+      "olvidosa.com"
+    ],
+    "sites_count": 5,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://bebuyby.com/products/sandal-1",
+    "score": 9,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "5-piece-stainless-steel-cookware-set-with-glass-lids",
+    "title": "📢📢 -60% AUF 5-TEILIGES KOCHSET! 💎 Robuster Edelstahl, Glasdeckel & Elegante Gold-Akzente",
+    "price": "54.99",
+    "published_at": "2026-03-30T04:06:53+02:00",
+    "sites": [
+      "hairstudiov.com",
+      "dbhgy.com",
+      "roseionly.com",
+      "cairoe.com",
+      "swarous.com",
+      "groemont.com",
+      "eclire.com",
+      "chatubuy.com"
+    ],
+    "sites_count": 8,
+    "flagship_hits": [],
+    "flagship_count": 0,
+    "sample_url": "https://hairstudiov.com/products/5-piece-stainless-steel-cookware-set-with-glass-lids",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "4g-lte-kabellose-solarbetriebene-uberwachungskamera",
+    "title": "🔥🎥 4G LTE drahtlose Solar-Überwachungskamera CB114S – 💎 2K-HD-Echtzeitvorschau, 360°-Panoramaabdeckung, kein WLAN erforderlich, Fernsteuerung über App, wasserdicht, Bewegungserkennung, Nachtsichtfunktion, für den Außenbereich geeignet",
+    "price": "96.99",
+    "published_at": "2026-03-30T06:05:29-04:00",
+    "sites": [
+      "hairstudiov.com",
+      "copensunny.com",
+      "perlolab.com",
+      "cairoe.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "copensunny.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://hairstudiov.com/products/4g-lte-kabellose-solarbetriebene-uberwachungskamera",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "marble",
+    "title": "🏆 Last Day Special Price !!!! 🔥Marble Effect Floor Paint",
+    "price": "39.90",
+    "published_at": "2026-04-01T12:17:21+08:00",
+    "sites": [
+      "britneed.com",
+      "outdhaven.com",
+      "comebybuy.com",
+      "lilacois.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/marble",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "crescent-shaped-half-shaft-wrench",
+    "title": "⏳Limited-time 50% off⏰Crescent-Shaped Half Shaft Wrench🚗🔧",
+    "price": "8.99",
+    "published_at": "2026-03-30T11:29:55+08:00",
+    "sites": [
+      "britneed.com",
+      "leteimall.com",
+      "shopingmally.com",
+      "hetetech.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "britneed.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://britneed.com/products/crescent-shaped-half-shaft-wrench",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "qchlj",
+    "title": "3‑in‑1 SiO₂ Ceramic Quick Coat Spray – Waterless Wash, Streak‑Free Gloss & Rain‑Beading Shield",
+    "price": "11.99",
+    "published_at": "2026-03-30T16:44:54+08:00",
+    "sites": [
+      "loungon.com",
+      "clarioy.com",
+      "forubom.com",
+      "cashaion.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "loungon.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://loungon.com/products/qchlj",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "powerful-sound",
+    "title": "🔥NEW ARRIVAL LIMITED TIME OFFER🔥2-in-1 Magnetic Bluetooth Speaker",
+    "price": "72.99",
+    "published_at": "2026-03-31T01:03:43-08:00",
+    "sites": [
+      "boniss.com",
+      "meteor1776.com",
+      "newbeew.com",
+      "comebybuy.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "boniss.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://boniss.com/products/powerful-sound",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "golf-shorts",
+    "title": "🔥HOT SALE 70% OFF🥰Men's Stretch Quick Dry Casual Work Golf Shorts",
+    "price": "12.98",
+    "published_at": "2026-03-31T03:41:10-04:00",
+    "sites": [
+      "chic-lucky.com",
+      "stardusst.com",
+      "charm-cart.com",
+      "nnice.uk"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "charm-cart.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://chic-lucky.com/products/golf-shorts",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "turbo-fan",
+    "title": "⏳LAST DAY SALE 70% OFF👍🔥Portable Handheld Turbo Fan💨",
+    "price": "8.99",
+    "published_at": "2026-03-30T06:20:23-04:00",
+    "sites": [
+      "stardusst.com",
+      "modamissy.com",
+      "bebuyby.com",
+      "nnice.uk"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "bebuyby.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://stardusst.com/products/turbo-fan",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "summer-car-seat-pad-with-advanced-cooling",
+    "title": "Summer Car Seat Pad With Advanced Cooling",
+    "price": "29.99",
+    "published_at": "2026-04-01T19:04:00+08:00",
+    "sites": [
+      "rouvenor.com",
+      "kingwwy.com",
+      "perlolab.com",
+      "cairoe.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "rouvenor.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://rouvenor.com/products/summer-car-seat-pad-with-advanced-cooling",
+    "score": 8,
+    "date": "2026-04-02"
+  },
+  {
+    "handle": "non-greasy-moisturizing-hand-cream",
+    "title": "🌿 Non-Greasy Moisturizing Hand Cream – Silky Soft in Seconds, Zero Residue! ✨🧴",
+    "price": "16.99",
+    "published_at": "2026-03-30T02:08:38-08:00",
+    "sites": [
+      "rouvenor.com",
+      "kingwwy.com",
+      "approchu.com",
+      "choosemuc.com"
+    ],
+    "sites_count": 4,
+    "flagship_hits": [
+      "rouvenor.com"
+    ],
+    "flagship_count": 1,
+    "sample_url": "https://rouvenor.com/products/non-greasy-moisturizing-hand-cream",
+    "score": 8,
+    "date": "2026-04-02"
+  }
+];
+
+// Category rules
+const CATS = [
+  { id: 'all', label: '全部', match: () => true },
+  { id: 'beauty', label: '💄 美容个护', match: t => /hair|cream|facial|beauty|liner|cleanser|ipl|ear|skin|nail|lash|cosmetic|makeup|lotion|serum/i.test(t) },
+  { id: 'clothing', label: '👗 服装鞋帽', match: t => /dress|pants|shoes|sandal|jacket|shirt|top|skirt|legging|sneaker|boot|socks|hoodi|sleeve|blazer|jeans|coat|swimsuit|bikini|bra|underwear/i.test(t) },
+  { id: 'home', label: '🏠 家居厨房', match: t => /cookware|baking|broom|pan|pot|bowl|mug|cup|storage|bag|bedding|pillow|curtain|lamp|shelf|rack|organizer|kitchen|cook|home/i.test(t) },
+  { id: 'auto', label: '🚗 汽车配件', match: t => /tire|tyre|motorcycle|car|headlight|disc lock|vehicle|auto|motor|wheel|wiper|seat cover/i.test(t) },
+  { id: 'electronics', label: '📱 电子数码', match: t => /camera|drone|solar|screen|wireless|touchscreen|fan|bluetooth|speaker|headphone|earphone|charger|battery|power station|solar|4g|lte|wifi|smart|monitor|display|electronic/i.test(t) },
+  { id: 'tools', label: '🔧 工具五金', match: t => /wrench|tool bag|wire puller|disc lock|tool|plier|drill|saw|screwdriver|hammer|level|laser|canvas bag|box cutter|tape/i.test(t) },
+];
+
+// Chinese translations (keyword-based)
+const CN_MAP = [
+  [/hair removal|haarentfernung/i, '脱毛仪'],
+  [/ipl/i, 'IPL 冰点脱毛仪'],
+  [/cookware|kochset/i, '炊具套装'],
+  [/baking (tray|pan)|carbon steel/i, '碳钢烤盘'],
+  [/broom/i, '硅胶扫把'],
+  [/motorcycle.*disc lock|disc lock/i, '摩托车报警碟刹锁'],
+  [/canvas tool bag|tool bag/i, '帆布工具袋'],
+  [/wire puller/i, '穿线器'],
+  [/wrench/i, '扳手'],
+  [/electricity saving box/i, '节电器'],
+  [/solar.*camera|camera.*solar/i, '太阳能摄像头'],
+  [/4g lte.*camera|camera.*4g/i, '4G LTE 太阳能监控摄像头'],
+  [/power station/i, '便携储能电源'],
+  [/drone/i, '水面无人机'],
+  [/ear cleaner/i, '电动洗耳器'],
+  [/wireless.*adapter|adapter.*wireless/i, '无线 CarPlay 适配器'],
+  [/jet fan|portable fan/i, '便携喷气风扇'],
+  [/military watch/i, '军事风格双显手表'],
+  [/tactical cargo pants/i, '战术多口袋工装裤'],
+  [/touchscreen display/i, '无线智能触控屏'],
+  [/headlight/i, '车灯修复套装'],
+  [/magnifying glass/i, '折叠放大镜'],
+  [/sandal/i, '露趾凉鞋'],
+  [/summer.*dress|babydoll dress|maxi dress/i, '夏季连衣裙'],
+  [/sneaker|platform shoe/i, '厚底运动鞋'],
+  [/striped.*pants|side pocket pants/i, '条纹侧口袋休闲裤'],
+  [/spray|degreaser/i, '多用途去污喷雾'],
+  [/gel liner/i, '防水眼线胶笔'],
+  [/hair removal cream/i, '温和脱毛膏'],
+  [/marble/i, '大理石纹地面漆'],
+  [/tile wax|tire wax/i, '轮胎光亮蜡'],
+  [/mug/i, '马克杯'],
+  [/oral irrigator|water flosser/i, '便携冲牙器'],
+  [/camping.*bag|storage bag/i, '户外露营收纳袋'],
+  [/PTZ camera/i, '太阳能 PTZ 摄像头'],
+  [/fake.*dress|二件套|blatt/i, '仿两件套连衣裙'],
+  [/lace.*dress|babydoll/i, '镂空蕾丝连衣裙'],
+  [/cloud slide|non-slip.*sole/i, '厚底防滑云朵拖鞋'],
+];
+
+function getChineseTitle(title) {
+  // Remove emojis and promo noise for matching
+  const clean = title.replace(/[^ -~À-ɏ]/g, '').trim();
+  for (const [re, cn] of CN_MAP) {
+    if (re.test(clean) || re.test(title)) return cn;
+  }
+  // Fallback: extract main noun
+  return extractNoun(clean);
+}
+
+function extractNoun(t) {
+  const cleaned = t.replace(/\d+%\s*OFF|SALE|Rabatt|FREE|LIMITED|LAST DAY|HOT|🔥|⚡|💎|🏆|💥|✨|⏳|\bBUY\b|\bGET\b/gi,'').trim();
+  const words = cleaned.split(/[\s,\-–|]+/).filter(w => w.length > 2).slice(0,3);
+  return words.join(' ') || t.slice(0,30);
+}
+
+function getCategory(title) {
+  for (const cat of CATS.slice(1)) {
+    if (cat.match(title)) return cat.id;
+  }
+  return 'other';
+}
+
+function getCatLabel(id) {
+  const c = CATS.find(x => x.id === id);
+  return c ? c.label : '📦 其他';
+}
+
+function scoreColor(s) {
+  if (s >= 18) return 'score-high';
+  if (s >= 12) return 'score-mid';
+  return 'score-low';
+}
+
+function rankBadge(i) {
+  if (i === 0) return '<span class="rank rank-1">🥇 #1</span>';
+  if (i === 1) return '<span class="rank rank-2">🥈 #2</span>';
+  if (i === 2) return '<span class="rank rank-3">🥉 #3</span>';
+  if (i < 10) return `<span class="rank">#${i+1}</span>`;
+  return '';
+}
+
+function stripEmoji(s) {
+  return s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]+/gu, '').replace(/\s+/g,' ').trim();
+}
+
+// Gradient palettes for placeholders
+const GRADIENTS = [
+  ['#e0e7ff','#c7d2fe'],['#fce7f3','#fbcfe8'],['#ecfdf5','#a7f3d0'],
+  ['#fef3c7','#fde68a'],['#eff6ff','#bfdbfe'],['#f5f3ff','#ddd6fe'],
+  ['#fff1f2','#fecdd3'],['#f0fdfa','#99f6e4'],
+];
+function cardGradient(i) {
+  const [a,b] = GRADIENTS[i % GRADIENTS.length];
+  return `background: linear-gradient(135deg, ${a} 0%, ${b} 100%);`;
+}
+
+// Category icons
+const CAT_ICONS = {
+  beauty:'💄',clothing:'👗',home:'🏠',auto:'🚗',electronics:'📱',tools:'🔧',all:'📦'
+};
+function catIcon(id) { return CAT_ICONS[id] || '📦'; }
+
+let activecat = 'all';
+let currentModal = null;
+
+function openModal(idx) {
+  const p = filtered()[idx] || RAW_DATA.find(x=>x._idx===idx);
+  if (!p) return;
+  currentModal = p;
+  document.getElementById('modal-title').textContent = '📦 铺货站点 · ' + stripEmoji(p.title).slice(0,40);
+  const ul = document.getElementById('modal-sites');
+  ul.innerHTML = p.sites.map(s => {
+    const isFlag = (p.flagship_hits||[]).includes(s);
+    return `<li>
+      <span>${s} ${isFlag ? '<span class=\"flagship-tag\">旗舰</span>' : ''}</span>
+      <a href="https://${s}" target="_blank" rel="noopener">访问 →</a>
+    </li>`;
+  }).join('');
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+function filtered() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const sort = document.getElementById('sort').value;
+  let data = RAW_DATA.map((p,i)=>({...p,_idx:i,_cat:getCategory(p.title)}));
+
+  if (activecat !== 'all') {
+    const catDef = CATS.find(x=>x.id===activecat);
+    if (catDef) data = data.filter(p => catDef.match(p.title));
+  }
+  if (q) {
+    data = data.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.handle.toLowerCase().includes(q) ||
+      (p.sites||[]).some(s=>s.includes(q))
+    );
+  }
+  if (sort === 'score') data.sort((a,b) => b.score - a.score);
+  else if (sort === 'sites') data.sort((a,b) => b.sites_count - a.sites_count);
+  else if (sort === 'flagship') data.sort((a,b) => b.flagship_count - a.flagship_count);
+  else if (sort === 'price_asc') data.sort((a,b) => parseFloat(a.price) - parseFloat(b.price));
+  else if (sort === 'price_desc') data.sort((a,b) => parseFloat(b.price) - parseFloat(a.price));
+  return data;
+}
+
+function render() {
+  const data = filtered();
+  document.getElementById('result-count').textContent = data.length;
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  if (!data.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  grid.innerHTML = data.slice(0,50).map((p, vi) => {
+    const orig_i = p._idx;
+    const cn = getChineseTitle(p.title);
+    const clean = stripEmoji(p.title);
+    const flagships = p.flagship_hits || [];
+    const hasFlag = flagships.length > 0;
+    const priceNum = parseFloat(p.price);
+    const currency = p.price && p.sample_url && p.sample_url.includes('.com') ? '€' : '€';
+    const dateStr = (p.date || '').slice(5); // MM-DD
+    
+    return `<div class="card">
+      <div class="card-img-wrap">
+        ${rankBadge(vi)}
+        <div class="card-img-placeholder" style="${cardGradient(orig_i)}" id="img-wrap-${orig_i}">
+          <span>${catIcon(p._cat)}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-title" title="${clean.replace(/"/g,'&quot;')}">${clean || p.title}</div>
+          <span class="score-badge ${scoreColor(p.score)}">⭐ ${p.score}</span>
+        </div>
+        <div class="card-cn">🇨🇳 ${cn}</div>
+        <div class="card-meta">
+          <span class="meta-chip chip-price">💰 ${currency}${priceNum.toFixed(2)}</span>
+          <span class="meta-chip chip-sites">🏪 ${p.sites_count} 家</span>
+          ${hasFlag ? `<span class="meta-chip chip-flagship">⭐ ${p.flagship_count} 旗舰</span>` : ''}
+          <span class="meta-chip chip-date">📅 ${dateStr}</span>
+        </div>
+        ${hasFlag ? `<div class="flagship-list"><strong>旗舰：</strong>${flagships.slice(0,3).join(' · ')}${flagships.length>3?` · +${flagships.length-3}`:''}</div>` : ''}
+        <div class="card-actions">
+          <a class="btn-sample" href="${p.sample_url}" target="_blank" rel="noopener">🔗 样品链接</a>
+          <button class="btn-sites" onclick="openModal(${orig_i})" title="查看全部铺货站点">
+            🏪 ${p.sites_count}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function initCatTabs() {
+  const wrap = document.getElementById('cat-tabs');
+  // Count per category
+  const counts = {};
+  RAW_DATA.forEach(p => {
+    const cat = getCategory(p.title);
+    counts[cat] = (counts[cat]||0)+1;
+  });
+  
+  const tabData = [
+    ...CATS.map(c => ({...c, count: c.id==='all' ? RAW_DATA.length : (counts[c.id]||0)})),
+    {id:'other', label:'📦 其他', match:()=>true, count: counts['other']||0}
+  ].filter((c,i,arr) => c.id==='all' || c.count>0 || !arr.find(x=>x.id===c.id && x!==c));
+  
+  wrap.innerHTML = tabData.map(c =>
+    `<button class="cat-tab${activecat===c.id?' active':''}" data-id="${c.id}" onclick="setcat('${c.id}')">${c.label} <span style="opacity:.6">${c.count}</span></button>`
+  ).join('');
+}
+
+function setcat(id) {
+  activecat = id;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.id===id));
+  render();
+}
+
+function initStats() {
+  const total = RAW_DATA.length;
+  const withFlag = RAW_DATA.filter(p=>(p.flagship_hits||[]).length>0).length;
+  const maxScore = Math.max(...RAW_DATA.map(p=>p.score));
+  const avgSites = (RAW_DATA.reduce((a,p)=>a+p.sites_count,0)/total).toFixed(1);
+  
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-pill">📦 <strong>${total}</strong> 个商品</div>
+    <div class="stat-pill">⭐ 最高分 <strong>${maxScore}</strong></div>
+    <div class="stat-pill">🏪 平均铺货 <strong>${avgSites}</strong> 家</div>
+    <div class="stat-pill">🔥 旗舰命中 <strong>${withFlag}</strong> 个</div>
+  `;
+  document.getElementById('updated-time').textContent = new Date().toLocaleDateString('zh-CN');
+}
+
+// Init
+initStats();
+initCatTabs();
+render();
+</script>
+</body>
+</html>
