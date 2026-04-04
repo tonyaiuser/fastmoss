@@ -157,6 +157,15 @@ def generate_html(region="US"):
             if not vc:
                 vc = ic
 
+            # 标签: 爆发中 / 高互动
+            tags_html = ""
+            velocity_score = r.get("velocity_score", 0)
+            engagement_score = r.get("engagement_score", 0)
+            if velocity_score >= 70:
+                tags_html += '<span class="tag-burst">爆发中</span> '
+            if engagement_score >= 70:
+                tags_html += '<span class="tag-engage">高互动</span> '
+
             extra = ""
             if is_discover:
                 cat = r.get("item_category_l1", "") or ""
@@ -167,7 +176,7 @@ def generate_html(region="US"):
 
             rows.append(f'''<tr data-time="{ct}" data-views="{views}" data-score="{score}">
 <td class="center">{i}</td>
-<td class="center"><span class="score {sc}">{score:.0f}</span></td>
+<td class="center"><span class="score {sc}">{score:.0f}</span> {tags_html}</td>
 <td>{img_html(vc, 48)}</td>
 <td>{img_html(ic, 48)}</td>
 <td class="cell-item">
@@ -264,6 +273,8 @@ tr:hover td{{background:#fafbff}}
 .empty{{text-align:center;padding:40px;color:#9ca3af}}
 .score{{display:inline-block;font-weight:700;font-size:18px;min-width:32px;text-align:center}}
 .hi{{color:#10b981}}.mid{{color:#f59e0b}}.lo{{color:#6b7280}}
+.tag-burst{{display:inline-block;background:#fee2e2;color:#dc2626;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}}
+.tag-engage{{display:inline-block;background:#dbeafe;color:#2563eb;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}}
 .thumb{{object-fit:cover;border-radius:6px;cursor:pointer;display:block}}
 .img-placeholder{{background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:10px}}
 .cell-main{{max-width:220px}}

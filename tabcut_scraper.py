@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 USERNAME = os.environ.get("TABCUT_USER", "zhy0804@ycimedia.com")
 PASSWORD = os.environ.get("TABCUT_PASS", "9RMapT4QDKspVvp")
 MIN_VIEWS = 200_000
-MIN_VIEWS_RECENT = 100_000  # 最近1天内的视频降低门槛
+MIN_VIEWS_RECENT = 50_000   # 最近1天内的视频大幅降低门槛，抓早期潜力素材
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 HISTORY_DIR = os.path.join(OUTPUT_DIR, "history")
@@ -129,43 +129,182 @@ def is_excluded(item_name="", category_name="", category_id=None):
     return False
 
 
-def calc_score(views, publish_time_str, now=None):
-    """计算评分: 播放量60% + 时间新鲜度40%"""
+# =============================================================================
+# 历史指标存储（用于跨天 growth_boost）
+# =============================================================================
+import math
+
+
+def metric_history_path(task_prefix, region):
+    return os.path.join(HISTORY_DIR, f"{task_prefix}_metrics_{region}.json")
+
+
+def load_metric_history(task_prefix, region):
+    """加载历史指标，返回 {video_id: {views, likes, shares, comments, date}}"""
+    path = metric_history_path(task_prefix, region)
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def save_metric_history(task_prefix, region, df):
+    """保存当天指标到历史文件，自动清理 7 天前的条目"""
+    path = metric_history_path(task_prefix, region)
+    today = datetime.now().strftime("%Y-%m-%d")
+    cutoff = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    # 加载已有历史
+    history = {}
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            history = json.load(f)
+
+    # 清理过期条目
+    history = {k: v for k, v in history.items() if v.get("date", "") >= cutoff}
+
+    # 写入当天数据
+    for _, row in df.iterrows():
+        vid = str(row.get("video_id", ""))
+        if vid:
+            history[vid] = {
+                "views": int(row.get("views", 0)),
+                "likes": int(row.get("likes", 0)),
+                "shares": int(row.get("shares", 0)),
+                "comments": int(row.get("comments", 0)),
+                "date": today,
+            }
+
+    os.makedirs(HISTORY_DIR, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(history, f)
+    print(f"   ✓ 历史指标已保存: {path} ({len(history)} 条)")
+
+
+# =============================================================================
+# 评分系统 v2：4 维度绝对评分
+# =============================================================================
+def _parse_pub_time(publish_time_str):
+    """解析发布时间字符串为 datetime"""
+    if not publish_time_str:
+        return None
+    try:
+        s = str(publish_time_str)[:19]
+        if "T" in s:
+            return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+        return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return None
+
+
+def calc_score(views, publish_time_str, likes=0, shares=0, comments=0,
+               sold_count=0, prev_views=None, now=None):
+    """计算 5 维度评分:
+    views_score:      绝对对数刻度 (100K=0, 10M=100)
+    freshness_score:  指数衰减 (半衰期 36h)
+    engagement_score: 互动率固定阈值
+    velocity_score:   爆发力 = views_per_hour 对数刻度 + 跨天增长加成
+    sales_score:      出单量对数刻度
+    """
     if now is None:
         now = datetime.now()
 
-    # 时间得分
-    time_score = 0
-    try:
-        pub_dt = datetime.strptime(publish_time_str[:19], "%Y-%m-%dT%H:%M:%S") if "T" in publish_time_str else datetime.strptime(publish_time_str[:19], "%Y-%m-%d %H:%M:%S")
-        days_ago = (now - pub_dt).total_seconds() / 86400
-        if days_ago < 1:
-            time_score = 100
-        elif days_ago < 2:
-            time_score = 70
-        elif days_ago < 3:
-            time_score = 40
-        else:
-            time_score = max(0, 10 - (days_ago - 3) * 2)
-    except Exception:
-        time_score = 0
+    # --- views_score: 绝对对数刻度 (0-100) ---
+    LOG_FLOOR = 5.0   # log10(100K)
+    LOG_CEIL = 7.0    # log10(10M)
+    log_views = math.log10(max(views, 1))
+    views_score = max(0, min(100, (log_views - LOG_FLOOR) / (LOG_CEIL - LOG_FLOOR) * 100))
 
-    return {"views": views, "time_score": time_score}
+    # --- freshness_score: 指数衰减 (0-100) ---
+    freshness_score = 0
+    hours_ago = None
+    pub_dt = _parse_pub_time(publish_time_str)
+    if pub_dt:
+        hours_ago = max(0, (now - pub_dt).total_seconds() / 3600)
+        half_life_hours = 24
+        freshness_score = 100 * (0.5 ** (hours_ago / half_life_hours))
+
+    # --- engagement_score: 互动率固定阈值 (0-100) ---
+    eng_rate = (likes + shares + comments) / max(views, 1)
+    if eng_rate >= 0.05:
+        engagement_score = 100
+    elif eng_rate >= 0.023:
+        engagement_score = 70 + (eng_rate - 0.023) / (0.05 - 0.023) * 30
+    elif eng_rate >= 0.011:
+        engagement_score = 40 + (eng_rate - 0.011) / (0.023 - 0.011) * 30
+    elif eng_rate >= 0.003:
+        engagement_score = (eng_rate - 0.003) / (0.011 - 0.003) * 40
+    else:
+        engagement_score = 0
+
+    # --- velocity_score: 爆发力 (0-100) ---
+    # 基于 views_per_hour 的对数刻度: 1K/h(=3.0) → 0, 100K/h(=5.0) → 100
+    velocity_score = 0
+    VPH_LOG_FLOOR = 3.0  # log10(1000)
+    VPH_LOG_CEIL = 5.0   # log10(100000)
+    if hours_ago is not None and hours_ago >= 0:
+        vph = views / max(hours_ago, 1)
+        log_vph = math.log10(max(vph, 1))
+        velocity_score = max(0, min(100, (log_vph - VPH_LOG_FLOOR) / (VPH_LOG_CEIL - VPH_LOG_FLOOR) * 100))
+
+    # 跨天增长加成: 渐进式，1.3x 起步
+    if prev_views and prev_views > 0:
+        growth = views / prev_views
+        if growth >= 3.0:
+            velocity_score = min(100, velocity_score + 20)
+        elif growth >= 2.0:
+            velocity_score = min(100, velocity_score + 15)
+        elif growth >= 1.5:
+            velocity_score = min(100, velocity_score + 10)
+        elif growth >= 1.3:
+            velocity_score = min(100, velocity_score + 5)
+
+    # --- sales_score: 出单量对数刻度 (0-100) ---
+    # 10单(=1.0) → 0, 10K单(=4.0) → 100
+    sales_score = 0
+    try:
+        sc = float(sold_count or 0)
+        if sc > 0:
+            SOLD_LOG_FLOOR = 1.0   # log10(10)
+            SOLD_LOG_CEIL = 4.0    # log10(10000)
+            log_sold = math.log10(max(sc, 1))
+            sales_score = max(0, min(100, (log_sold - SOLD_LOG_FLOOR) / (SOLD_LOG_CEIL - SOLD_LOG_FLOOR) * 100))
+    except (ValueError, TypeError):
+        sales_score = 0
+
+    return {
+        "views": views,
+        "views_score": round(views_score, 1),
+        "freshness_score": round(freshness_score, 1),
+        "engagement_score": round(engagement_score, 1),
+        "velocity_score": round(velocity_score, 1),
+        "sales_score": round(sales_score, 1),
+    }
 
 
 def finalize_scores(df):
-    """归一化播放量得分并计算总分"""
+    """权重聚合: freshness 35% + velocity 25% + sales 15% + engagement 15% + views 10%"""
     if df.empty:
         return df
 
-    max_views = df["views"].max()
-    min_views = df["views"].min()
-    if max_views > min_views:
-        df["views_score"] = ((df["views"] - min_views) / (max_views - min_views) * 100).round(1)
-    else:
-        df["views_score"] = 100.0
+    W_FRESH = 0.35
+    W_VELOCITY = 0.25
+    W_SALES = 0.15
+    W_ENGAGE = 0.15
+    W_VIEWS = 0.10
 
-    df["total_score"] = (df["views_score"] * 0.45 + df["time_score"] * 0.55).round(1)
+    # sales_score 列可能不存在（旧数据兼容）
+    if "sales_score" not in df.columns:
+        df["sales_score"] = 0.0
+
+    df["total_score"] = (
+        df["freshness_score"] * W_FRESH +
+        df["velocity_score"] * W_VELOCITY +
+        df["engagement_score"] * W_ENGAGE +
+        df["views_score"] * W_VIEWS +
+        df["sales_score"] * W_SALES
+    ).round(1)
+
     df = df.sort_values("total_score", ascending=False)
     return df
 
@@ -179,6 +318,10 @@ def task1_video_rank(page, region="US"):
     print("\n" + "=" * 60)
     print(f"需求1: 视频榜 {meta['name_zh']} 日榜 播放量 >= 200K")
     print("=" * 60)
+
+    # 加载历史指标（用于跨天 growth_boost）
+    prev_metrics = load_metric_history("task1", region)
+    print(f"   历史指标: {len(prev_metrics)} 条")
 
     all_videos = []
     page_no = 1
@@ -227,7 +370,18 @@ def task1_video_rank(page, region="US"):
             if is_excluded(item_name=item_name_str.lower()):
                 continue
 
-            scores = calc_score(play_count, v.get("createTime", ""))
+            vid = str(v.get("videoId", ""))
+            prev = prev_metrics.get(vid, {})
+            likes = v.get("likeCount", 0)
+            shares = v.get("shareCount", 0)
+            comments = v.get("commentCount", 0)
+            item_sold = items[0].get("soldCount", 0) if items else 0
+            scores = calc_score(
+                play_count, v.get("createTime", ""),
+                likes=likes, shares=shares, comments=comments,
+                sold_count=item_sold,
+                prev_views=prev.get("views"),
+            )
 
             all_videos.append({
                 "rank": v.get("rank"),
@@ -237,18 +391,22 @@ def task1_video_rank(page, region="US"):
                 "video_url": f"https://www.tiktok.com/@{v.get('authorName', '')}/video/{v.get('videoId', '')}",
                 "create_time": v.get("createTime") or "",
                 "views": play_count,
-                "likes": v.get("likeCount", 0),
-                "shares": v.get("shareCount", 0),
-                "comments": v.get("commentCount", 0),
+                "likes": likes,
+                "shares": shares,
+                "comments": comments,
                 "creator_name": v.get("authorName", ""),
                 "creator_id": v.get("authorUid", ""),
                 "creator_avatar": v.get("authorAvatarUrl") or "",
                 "item_name": item_name_str,
                 "item_cover": items[0].get("itemCoverUrl", "") if items else "",
                 "item_price": items[0].get("skuPrice", "") if items else "",
-                "item_sold": items[0].get("soldCount", "") if items else "",
+                "item_sold": item_sold,
                 "hashtags": ", ".join(h.get("hashtagName") or "" for h in (v.get("hashtags") or [])),
-                "time_score": scores["time_score"],
+                "views_score": scores["views_score"],
+                "freshness_score": scores["freshness_score"],
+                "engagement_score": scores["engagement_score"],
+                "velocity_score": scores["velocity_score"],
+                "sales_score": scores["sales_score"],
             })
 
         # 如果最小播放量已低于最低阈值，停止
@@ -267,6 +425,11 @@ def task1_video_rank(page, region="US"):
     df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"\n   ✓ 需求1完成: {path} ({len(df)} 条)")
     preview(df)
+
+    # 保存当天指标到历史
+    if not df.empty:
+        save_metric_history("task1", region, df)
+
     return df
 
 
@@ -329,6 +492,10 @@ def task3_discover_video(page, region="US"):
     begin = (now - timedelta(days=3)).strftime("%Y-%m-%d 00:00:00")
     end = now.strftime("%Y-%m-%d 23:59:59")
 
+    # 加载历史指标（用于跨天 growth_boost）
+    prev_metrics = load_metric_history("task3", region)
+    print(f"   历史指标: {len(prev_metrics)} 条")
+
     all_videos = []
     page_no = 1
 
@@ -385,7 +552,18 @@ def task3_discover_video(page, region="US"):
             if is_excluded(item_name=f"{item_name} {cat1} {cat2}".lower()):
                 continue
 
-            scores = calc_score(play_count, v.get("createTime", ""))
+            vid = str(v.get("videoId", ""))
+            prev = prev_metrics.get(vid, {})
+            likes = v.get("likeCountTotal", 0)
+            shares = v.get("shareCountTotal", 0)
+            comments = v.get("commentCountTotal", 0)
+            video_sold = v.get("videoSplitSoldCount", 0)
+            scores = calc_score(
+                play_count, v.get("createTime", ""),
+                likes=likes, shares=shares, comments=comments,
+                sold_count=video_sold,
+                prev_views=prev.get("views"),
+            )
 
             all_videos.append({
                 "video_id": v.get("videoId"),
@@ -394,9 +572,9 @@ def task3_discover_video(page, region="US"):
                 "video_url": v.get("tkVideoUrl") or "",
                 "create_time": v.get("createTime") or "",
                 "views": play_count,
-                "likes": v.get("likeCountTotal", 0),
-                "shares": v.get("shareCountTotal", 0),
-                "comments": v.get("commentCountTotal", 0),
+                "likes": likes,
+                "shares": shares,
+                "comments": comments,
                 "interaction_rate": v.get("interactionRate", 0),
                 "creator_name": v.get("authorNickname", ""),
                 "creator_id": v.get("authorUniqueId", ""),
@@ -408,8 +586,12 @@ def task3_discover_video(page, region="US"):
                 "item_sold_total": v.get("itemSoldCountTotal", 0),
                 "item_category_l1": cat1,
                 "item_category_l2": cat2,
-                "video_sold_count": v.get("videoSplitSoldCount", 0),
-                "time_score": scores["time_score"],
+                "video_sold_count": video_sold,
+                "views_score": scores["views_score"],
+                "freshness_score": scores["freshness_score"],
+                "engagement_score": scores["engagement_score"],
+                "velocity_score": scores["velocity_score"],
+                "sales_score": scores["sales_score"],
             })
 
         if min_play < MIN_VIEWS_RECENT:
@@ -430,6 +612,11 @@ def task3_discover_video(page, region="US"):
     df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"\n   ✓ 需求3完成: {path} ({len(df)} 条)")
     preview(df)
+
+    # 保存当天指标到历史
+    if not df.empty:
+        save_metric_history("task3", region, df)
+
     return df
 
 
