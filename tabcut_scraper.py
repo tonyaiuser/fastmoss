@@ -9,6 +9,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 import pandas as pd
 from playwright.sync_api import sync_playwright
@@ -102,6 +103,33 @@ def login(page):
     page.wait_for_load_state("networkidle")
     time.sleep(5)
     print(f"   ✓ 登录完成, URL: {page.url}")
+
+
+def api_request(page, method, url, payload=None, headers=None, timeout=30000):
+    """优先用浏览器上下文请求，避免页面内 fetch 被前端/风控拦截。"""
+    req_headers = {"Accept": "application/json, text/plain, */*"}
+    if headers:
+        req_headers.update(headers)
+
+    context = page.context
+    response = context.request.fetch(
+        url,
+        method=method,
+        data=payload,
+        headers=req_headers,
+        timeout=timeout,
+        fail_on_status_code=False,
+    )
+
+    status = response.status
+    text = response.text()
+    if status >= 400:
+        raise RuntimeError(f"HTTP {status} for {url}: {text[:500]}")
+
+    try:
+        return json.loads(text)
+    except Exception as e:
+        raise RuntimeError(f"Invalid JSON for {url}: {text[:500]}") from e
 
 
 def is_excluded(item_name="", category_name="", category_id=None):
@@ -329,12 +357,16 @@ def task1_video_rank(page, region="US"):
 
     while True:
         print(f"   第 {page_no} 页...", end=" ")
-        result = page.evaluate(f"""
-            async () => {{
-                const resp = await fetch('/api/ranking/videos?region={region}&regionId={meta["region_id"]}&rankDay=1&itemCategoryId=0&sort=10&pageNo={page_no}&pageSize={page_size}');
-                return await resp.json();
-            }}
-        """)
+        query = urlencode({
+            "region": region,
+            "regionId": meta["region_id"],
+            "rankDay": 1,
+            "itemCategoryId": 0,
+            "sort": 10,
+            "pageNo": page_no,
+            "pageSize": page_size,
+        })
+        result = api_request(page, "GET", f"https://www.tabcut.com/api/ranking/videos?{query}")
 
         data = result.get("result", {}).get("data", [])
         total = result.get("result", {}).get("total", 0)
@@ -409,11 +441,13 @@ def task1_video_rank(page, region="US"):
                 "sales_score": scores["sales_score"],
             })
 
-        # 如果最小播放量已低于最低阈值，停止
-        if min_play < MIN_VIEWS_RECENT:
+        # 命中最后一页或播放量已低于阈值时停止
+        if len(data) < page_size or min_play < MIN_VIEWS_RECENT:
             break
 
         page_no += 1
+        if total and page_no > ((total + page_size - 1) // page_size):
+            break
         time.sleep(0.5)
 
     df = pd.DataFrame(all_videos)
@@ -501,24 +535,21 @@ def task3_discover_video(page, region="US"):
 
     while True:
         print(f"   第 {page_no} 页...", end=" ")
-        result = page.evaluate(f"""
-            async () => {{
-                const resp = await fetch('/api/analysis/video-search/videoListV2', {{
-                    method: 'POST',
-                    headers: {{'Content-Type': 'application/json'}},
-                    body: JSON.stringify({{
-                        pageNo: {page_no},
-                        pageSize: 20,
-                        region: '{region}',
-                        sortField: 'play_count_total',
-                        videoCreateTimeBegin: '{begin}',
-                        videoCreateTimeEnd: '{end}',
-                        itemVideoFlag: 1
-                    }})
-                }});
-                return await resp.json();
-            }}
-        """)
+        result = api_request(
+            page,
+            "POST",
+            "https://www.tabcut.com/api/analysis/video-search/videoListV2",
+            payload={
+                "pageNo": page_no,
+                "pageSize": 20,
+                "region": region,
+                "sortField": "play_count_total",
+                "videoCreateTimeBegin": begin,
+                "videoCreateTimeEnd": end,
+                "itemVideoFlag": 1,
+            },
+            headers={"Content-Type": "application/json"},
+        )
 
         data = result.get("result", {}).get("data", [])
         total = result.get("result", {}).get("total", 0)
@@ -642,7 +673,7 @@ def task4_new_product(page, region="US"):
             print(f"   日期={biz_date} 第 {page_no} 页...", end=" ")
 
             # trpc API 需要编码参数
-            input_params = json.dumps({
+            input_params = {
                 "pageNo": page_no,
                 "pageSize": 24,
                 "rankType": 1,
@@ -651,15 +682,10 @@ def task4_new_product(page, region="US"):
                 "categoryId": "0",
                 "orderType": "1",
                 "sellerType": ""
-            })
+            }
 
-            result = page.evaluate(f"""
-                async () => {{
-                    const params = encodeURIComponent(JSON.stringify({input_params}));
-                    const resp = await fetch('/api/trpc/ranking.goods.rankingData?input=' + params);
-                    return await resp.json();
-                }}
-            """)
+            params = urlencode({"input": json.dumps(input_params, ensure_ascii=False)})
+            result = api_request(page, "GET", f"https://www.tabcut.com/api/trpc/ranking.goods.rankingData?{params}")
 
             # trpc 的数据结构多一层
             inner = result.get("result", {}).get("data", {})
@@ -725,7 +751,11 @@ def task4_new_product(page, region="US"):
             history_ids = set(json.load(f))
     print(f"   历史记录: {len(history_ids)} 条")
 
-    new_df = df[~df["item_id"].isin(history_ids)].copy() if not df.empty else pd.DataFrame()
+    new_df = df[~df["item_id"].isin(history_ids)].copy() if not df.empty else pd.DataFrame(columns=list(df.columns) if not df.empty else [
+        "rank", "item_id", "item_name", "item_cover", "category", "category_id", "price",
+        "sold_period", "sold_total", "gmv_period", "seller_name", "seller_type",
+        "commission_rate", "related_creators_90d", "related_videos_90d", "biz_date"
+    ])
     print(f"   新商品: {len(new_df)} 条 (从 {len(df)} 条中)")
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -786,7 +816,7 @@ def main():
     os.makedirs(HISTORY_DIR, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         context = browser.new_context(
             viewport={"width": 1920, "height": 1080},
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

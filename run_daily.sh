@@ -88,5 +88,5 @@ run_one_region() {
     echo "========================================" >> "$LOG_FILE"
 }
 
-run_one_region US
-run_one_region GB
+run_one_region US || true
+run_one_region GB || true
