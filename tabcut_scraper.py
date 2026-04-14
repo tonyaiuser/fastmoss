@@ -452,6 +452,7 @@ def task1_video_rank(page, region="US"):
 
     df = pd.DataFrame(all_videos)
     if not df.empty:
+        df = df.drop_duplicates(subset=["video_id"], keep="first")
         df = finalize_scores(df)
 
     today = datetime.now().strftime("%Y-%m-%d")
