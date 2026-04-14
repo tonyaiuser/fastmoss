@@ -382,10 +382,6 @@ td,th{{padding:6px 6px;font-size:11px}}
       <div style="font-size:16px;font-weight:700;margin-bottom:8px;">今日决策视图</div>
       <div style="color:#6b7280;line-height:1.8;">A 看高分爆热视频, B 看首次出现的新素材, C 看多视频聚合后的高潜商品, D 看商品榜新增商品。</div>
     </div>
-    <div class="panel">
-      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">运行诊断</div>
-      {diag_html}
-    </div>
   </div>
 </div>
 <div class="tabs">
