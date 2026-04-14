@@ -100,6 +100,7 @@ def generate_html(region="US"):
     df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
     df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
     df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
+    diagnostics_path = os.path.join(OUTPUT_DIR, f"diagnostics_{region}_{today}.json")
 
     if df1.empty:
         for f in sorted(os.listdir(OUTPUT_DIR), reverse=True):
@@ -109,7 +110,16 @@ def generate_html(region="US"):
                 df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
                 df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
                 df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
+                diagnostics_path = os.path.join(OUTPUT_DIR, f"diagnostics_{region}_{today}.json")
                 break
+
+    diag_entries = []
+    if os.path.exists(diagnostics_path):
+        try:
+            with open(diagnostics_path, "r", encoding="utf-8") as f:
+                diag_entries = (json.load(f) or {}).get("entries", [])
+        except Exception:
+            diag_entries = []
 
     # 收集所有需要翻译的商品名
     print("正在翻译商品名...")
@@ -232,6 +242,41 @@ def generate_html(region="US"):
 </tr>''')
         return "\n".join(rows)
 
+    def decision_rows(df):
+        if df.empty:
+            return '<tr><td colspan="10" class="empty">暂无数据</td></tr>'
+        rows = []
+        for i, (_, r) in enumerate(df.iterrows(), 1):
+            score = float(r.get("decision_score", 0) or 0)
+            sc = "hi" if score >= 70 else "mid" if score >= 45 else "lo"
+            sample_url = str(r.get("sample_video_url", ""))
+            link_html = f'<a href="{sample_url}" target="_blank" rel="noopener">样本</a>' if sample_url and sample_url != "nan" else ""
+            rows.append(f'''<tr>
+<td class="center">{i}</td>
+<td class="center"><span class="score {sc}">{score:.0f}</span></td>
+<td>{img_html(r.get("sample_video_cover", "") or r.get("item_cover", ""), 48)}</td>
+<td>{img_html(r.get("item_cover", ""), 48)}</td>
+<td class="cell-item">
+  <div class="item-cn">{get_cn(r.get("item_name", ""))}</div>
+  <div class="item-en">{str(r.get("item_name", ""))[:60]}</div>
+  <div class="cat">{r.get("item_category_l1", "")}</div>
+</td>
+<td class="right num">{fmt_number(r.get("videos", 0))}</td>
+<td class="right">{fmt_number(r.get("creators", 0))}</td>
+<td class="right">{fmt_number(r.get("sum_views", 0))}</td>
+<td class="center">{link_html}</td>
+<td class="cell-main">
+  <div class="creator">{r.get("sample_creator_name", "")}</div>
+  <div class="desc">{str(r.get("sample_video_desc", ""))[:60]}</div>
+</td>
+</tr>''')
+        return "\n".join(rows)
+
+    diag_html = "".join(
+        f'<div class="diag {e.get("level", "info")}"><b>{e.get("task", "-")}</b> · {e.get("message", "")}</div>'
+        for e in diag_entries[:8]
+    ) or '<div class="diag info">本次没有诊断告警</div>'
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -252,6 +297,13 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .tc{{display:none;padding:16px 24px}}
 .tc.active{{display:block}}
 .stats{{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}}
+.hero{{padding:16px 24px;background:#fff;border-bottom:1px solid #e5e7eb}}
+.hero-grid{{display:grid;grid-template-columns:2fr 1fr;gap:14px}}
+.panel{{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}}
+.diag{{padding:8px 10px;border-radius:8px;margin-bottom:8px;font-size:12px}}
+.diag.info{{background:#eff6ff;color:#1d4ed8}}
+.diag.warning{{background:#fff7ed;color:#c2410c}}
+.diag.error{{background:#fef2f2;color:#dc2626}}
 .sc{{background:#fff;border-radius:10px;padding:12px 16px;flex:1;min-width:130px;box-shadow:0 1px 3px rgba(0,0,0,.06)}}
 .sc .lb{{color:#6b7280;font-size:11px;margin-bottom:2px}}
 .sc .vl{{font-size:22px;font-weight:700}}
@@ -324,10 +376,22 @@ td,th{{padding:6px 6px;font-size:11px}}
 <h1>巴巴塔自动选品系统</h1>
 <div class="sub">数据日期: {today} | 生成: {datetime.now().strftime("%H:%M:%S")} | 地区: {region_name} ({region})</div>
 </div>
+<div class="hero">
+  <div class="hero-grid">
+    <div class="panel">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">今日决策视图</div>
+      <div style="color:#6b7280;line-height:1.8;">A 看高分爆热视频, B 看首次出现的新素材, C 看多视频聚合后的高潜商品, D 看商品榜新增商品。</div>
+    </div>
+    <div class="panel">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">运行诊断</div>
+      {diag_html}
+    </div>
+  </div>
+</div>
 <div class="tabs">
-<div class="tab active" onclick="sw(0)">视频榜日榜 <span class="badge">{len(df1)}</span></div>
-<div class="tab" onclick="sw(1)">新素材发现 <span class="badge">{len(df2)}</span></div>
-<div class="tab" onclick="sw(2)">发现视频 <span class="badge">{len(df3)}</span></div>
+<div class="tab active" onclick="sw(0)">爆热视频 <span class="badge">{len(df1)}</span></div>
+<div class="tab" onclick="sw(1)">新素材榜 <span class="badge">{len(df2)}</span></div>
+<div class="tab" onclick="sw(2)">高潜商品 <span class="badge">{len(df3)}</span></div>
 <div class="tab" onclick="sw(3)">商品榜新品 <span class="badge">{len(df4)}</span></div>
 </div>
 <div class="modal" id="modal" onclick="this.classList.remove('show')"><img id="modalImg"></div>
@@ -384,30 +448,29 @@ td,th{{padding:6px 6px;font-size:11px}}
 {video_rows(df2)}
 </tbody></table></div>
 
-<!-- Tab 2: 发现视频 -->
+<!-- Tab 2: 高潜商品 -->
 <div class="tc" id="t2">
 <div class="stats">
-<div class="sc"><div class="lb">总视频数</div><div class="vl">{len(df3)}</div></div>
-<div class="sc"><div class="lb">筛选条件</div><div class="vl" style="font-size:13px">近3天 | 带货 | >=200K</div></div>
-<div class="sc"><div class="lb">最高播放</div><div class="vl">{fmt_number(df3['views'].max()) if not df3.empty else 0}</div></div>
+<div class="sc"><div class="lb">候选商品数</div><div class="vl">{len(df3)}</div></div>
+<div class="sc"><div class="lb">筛选逻辑</div><div class="vl" style="font-size:13px">近3天视频聚合 | 去除与前两栏重合</div></div>
+<div class="sc"><div class="lb">最高决策分</div><div class="vl">{(f"{df3['decision_score'].max():.0f}" if not df3.empty and 'decision_score' in df3.columns else '0')}</div></div>
 </div>
 <div class="toolbar">
-<input type="text" placeholder="搜索达人、商品..." oninput="ft(this,'tb2')">
-<label><input type="checkbox" checked onchange="f7(this,'tb2')"> 隐藏7天前</label>
+<input type="text" placeholder="搜索商品、达人..." oninput="ft(this,'tb2')">
 </div>
 <table id="tb2"><thead><tr>
 <th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
-<th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
-<th style="width:56px">视频</th>
+<th data-c="1" data-t="n" style="width:44px">决策分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">样本视频</th>
 <th style="width:56px">商品</th>
 <th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
-<th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">视频数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">达人数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="n" style="text-align:right">累计播放 <span class="si">&#9650;&#9660;</span></th>
 <th style="width:36px">链接</th>
-<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="9" data-t="s">样本说明 <span class="si">&#9650;&#9660;</span></th>
 </tr></thead><tbody>
-{video_rows(df3, is_discover=True)}
+{decision_rows(df3)}
 </tbody></table></div>
 
 <!-- Tab 3: 商品榜 -->

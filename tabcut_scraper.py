@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import time
+from collections import Counter
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -28,6 +29,8 @@ REGIONS = {
     "GB": {"name_zh": "英国", "region_id": 2, "locale": "en-GB"},
 }
 
+RUN_DIAGNOSTICS = []
+
 
 def get_region_meta(region):
     region = (region or "US").upper()
@@ -42,6 +45,27 @@ def dated_region_path(prefix, region, today=None, ext="csv"):
 
 def history_path(name, region):
     return os.path.join(HISTORY_DIR, f"{name}_{region}.json")
+
+
+def diagnostics_path(region, today=None):
+    if today is None:
+        today = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(OUTPUT_DIR, f"diagnostics_{region}_{today}.json")
+
+
+def add_diagnostic(task, level, code, message, **details):
+    entry = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "task": task,
+        "level": level,
+        "code": code,
+        "message": message,
+    }
+    if details:
+        entry["details"] = details
+    RUN_DIAGNOSTICS.append(entry)
+    detail_text = f" | {json.dumps(details, ensure_ascii=False)}" if details else ""
+    print(f"   [{level.upper()}][{task}] {message}{detail_text}")
 
 # 排除的分类关键词（中英文）
 EXCLUDED_CATEGORIES = [
@@ -337,201 +361,101 @@ def finalize_scores(df):
     return df
 
 
-# =============================================================================
-# 需求1: 视频榜 美国 日榜 播放量200K+
-# =============================================================================
-def task1_video_rank(page, region="US"):
-    """需求1: 视频榜日榜"""
-    meta = get_region_meta(region)
-    print("\n" + "=" * 60)
-    print(f"需求1: 视频榜 {meta['name_zh']} 日榜 播放量 >= 200K")
-    print("=" * 60)
-
-    # 加载历史指标（用于跨天 growth_boost）
-    prev_metrics = load_metric_history("task1", region)
-    print(f"   历史指标: {len(prev_metrics)} 条")
-
-    all_videos = []
-    page_no = 1
-    page_size = 24
-
-    while True:
-        print(f"   第 {page_no} 页...", end=" ")
-        query = urlencode({
-            "region": region,
-            "regionId": meta["region_id"],
-            "rankDay": 1,
-            "itemCategoryId": 0,
-            "sort": 10,
-            "pageNo": page_no,
-            "pageSize": page_size,
-        })
-        result = api_request(page, "GET", f"https://www.tabcut.com/api/ranking/videos?{query}")
-
-        data = result.get("result", {}).get("data", [])
-        total = result.get("result", {}).get("total", 0)
-
-        if not data:
-            print("无数据")
-            break
-
-        min_play = min(v.get("playCount", 0) for v in data)
-        print(f"{len(data)} 条, 最小播放: {min_play:,}")
-
-        for v in data:
-            play_count = v.get("playCount", 0)
-
-            # 判断是否最近1天内的视频，降低播放量门槛
-            ct_str = v.get("createTime", "")
-            try:
-                ct_dt = datetime.strptime(ct_str[:19], "%Y-%m-%dT%H:%M:%S") if "T" in ct_str else datetime.strptime(ct_str[:19], "%Y-%m-%d %H:%M:%S")
-                is_recent = (datetime.now() - ct_dt).total_seconds() < 86400
-            except Exception:
-                is_recent = False
-            threshold = MIN_VIEWS_RECENT if is_recent else MIN_VIEWS
-            if play_count < threshold:
-                continue
-
-            # 获取商品信息
-            items = v.get("itemList", [])
-            item_names = [str(it.get("itemName") or "").strip() for it in items]
-            item_names = [name for name in item_names if name]
-            item_name_str = " | ".join(item_names)
-
-            # 排除检查（用商品名检查分类和IP）
-            if is_excluded(item_name=item_name_str.lower()):
-                continue
-
-            vid = str(v.get("videoId", ""))
-            prev = prev_metrics.get(vid, {})
-            likes = v.get("likeCount", 0)
-            shares = v.get("shareCount", 0)
-            comments = v.get("commentCount", 0)
-            item_sold = items[0].get("soldCount", 0) if items else 0
-            scores = calc_score(
-                play_count, v.get("createTime", ""),
-                likes=likes, shares=shares, comments=comments,
-                sold_count=item_sold,
-                prev_views=prev.get("views"),
-            )
-
-            all_videos.append({
-                "rank": v.get("rank"),
-                "video_id": v.get("videoId"),
-                "video_cover": v.get("videoCoverUrl") or "",
-                "video_desc": (v.get("videoDesc") or "")[:100],
-                "video_url": f"https://www.tiktok.com/@{v.get('authorName', '')}/video/{v.get('videoId', '')}",
-                "create_time": v.get("createTime") or "",
-                "views": play_count,
-                "likes": likes,
-                "shares": shares,
-                "comments": comments,
-                "creator_name": v.get("authorName", ""),
-                "creator_id": v.get("authorUid", ""),
-                "creator_avatar": v.get("authorAvatarUrl") or "",
-                "item_name": item_name_str,
-                "item_cover": items[0].get("itemCoverUrl", "") if items else "",
-                "item_price": items[0].get("skuPrice", "") if items else "",
-                "item_sold": item_sold,
-                "hashtags": ", ".join(h.get("hashtagName") or "" for h in (v.get("hashtags") or [])),
-                "views_score": scores["views_score"],
-                "freshness_score": scores["freshness_score"],
-                "engagement_score": scores["engagement_score"],
-                "velocity_score": scores["velocity_score"],
-                "sales_score": scores["sales_score"],
-            })
-
-        # 命中最后一页或播放量已低于阈值时停止
-        if len(data) < page_size or min_play < MIN_VIEWS_RECENT:
-            break
-
-        page_no += 1
-        if total and page_no > ((total + page_size - 1) // page_size):
-            break
-        time.sleep(0.5)
-
-    df = pd.DataFrame(all_videos)
-    if not df.empty:
-        df = df.drop_duplicates(subset=["video_id"], keep="first")
-        df = finalize_scores(df)
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    path = dated_region_path("task1_video_rank", region, today)
-    df.to_csv(path, index=False, encoding="utf-8-sig")
-    print(f"\n   ✓ 需求1完成: {path} ({len(df)} 条)")
-    preview(df)
-
-    # 保存当天指标到历史
-    if not df.empty:
-        save_metric_history("task1", region, df)
-
-    return df
+def video_meets_threshold(create_time, views):
+    try:
+        ct_dt = datetime.strptime(create_time[:19], "%Y-%m-%dT%H:%M:%S") if "T" in create_time else datetime.strptime(create_time[:19], "%Y-%m-%d %H:%M:%S")
+        is_recent = (datetime.now() - ct_dt).total_seconds() < 86400
+    except Exception:
+        is_recent = False
+    threshold = MIN_VIEWS_RECENT if is_recent else MIN_VIEWS
+    return views >= threshold
 
 
-# =============================================================================
-# 需求2: 视频榜新素材发现（历史未出现过）
-# =============================================================================
-def task2_new_material(page, region="US", task1_df=None):
-    """需求2: 视频榜新素材发现"""
-    print("\n" + "=" * 60)
-    print("需求2: 视频榜新素材发现（历史未出现过）")
-    print("=" * 60)
+def finalize_video_collection(rows, key="video_id"):
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    df = df.drop_duplicates(subset=[key], keep="first")
+    return finalize_scores(df)
 
-    # 如果没有 task1 数据，重新获取
-    if task1_df is None or task1_df.empty:
-        task1_df = task1_video_rank(page, region=region)
 
-    if task1_df.empty:
-        print("   ⚠ 无视频数据")
+def trim_task_overlap(primary_df, secondary_df, key="video_id", task_name="task"):
+    if primary_df is None or primary_df.empty or secondary_df is None or secondary_df.empty or key not in secondary_df.columns:
+        return secondary_df
+    primary_ids = {str(v) for v in primary_df.get(key, pd.Series(dtype=str)).dropna().tolist()}
+    before = len(secondary_df)
+    filtered = secondary_df[~secondary_df[key].astype(str).isin(primary_ids)].copy()
+    removed = before - len(filtered)
+    if removed > 0:
+        add_diagnostic(task_name, "info", "overlap_trimmed", "Trimmed overlapping rows against upstream module", removed=removed, remaining=len(filtered))
+    return filtered
+
+
+def build_hot_product_candidates(video_df):
+    if video_df is None or video_df.empty:
         return pd.DataFrame()
 
-    # 加载历史视频 ID
-    history_file = history_path("video_history", region)
-    history_ids = set()
-    if os.path.exists(history_file):
-        with open(history_file, "r") as f:
-            history_ids = set(json.load(f))
-    print(f"   历史记录: {len(history_ids)} 条")
+    work_df = video_df.copy()
+    if "item_id" not in work_df.columns:
+        work_df["item_id"] = ""
+    if "item_name" not in work_df.columns:
+        work_df["item_name"] = ""
 
-    # 筛选新素材
-    new_df = task1_df[~task1_df["video_id"].isin(history_ids)].copy()
-    print(f"   新素材: {len(new_df)} 条 (从 {len(task1_df)} 条中)")
+    work_df["product_key"] = work_df.apply(
+        lambda r: str(r.get("item_id") or "").strip() or str(r.get("item_name") or "").strip().lower(),
+        axis=1,
+    )
+    work_df = work_df[work_df["product_key"] != ""].copy()
+    if work_df.empty:
+        return pd.DataFrame()
 
-    today = datetime.now().strftime("%Y-%m-%d")
-    path = dated_region_path("task2_new_material", region, today)
-    new_df.to_csv(path, index=False, encoding="utf-8-sig")
-    print(f"   ✓ 需求2完成: {path}")
+    agg_rows = []
+    for _, group in work_df.groupby("product_key", sort=False):
+        group = group.sort_values("total_score", ascending=False)
+        top = group.iloc[0]
+        agg_rows.append({
+            "item_id": top.get("item_id", ""),
+            "item_name": top.get("item_name", ""),
+            "item_cover": top.get("item_cover", ""),
+            "item_price": top.get("item_price", ""),
+            "item_category_l1": top.get("item_category_l1", ""),
+            "item_category_l2": top.get("item_category_l2", ""),
+            "sample_video_id": top.get("video_id", ""),
+            "sample_video_url": top.get("video_url", ""),
+            "sample_video_cover": top.get("video_cover", ""),
+            "sample_creator_name": top.get("creator_name", ""),
+            "sample_video_desc": top.get("video_desc", ""),
+            "videos": int(group["video_id"].astype(str).nunique()) if "video_id" in group.columns else len(group),
+            "creators": int(group["creator_id"].astype(str).nunique()) if "creator_id" in group.columns else 0,
+            "sum_views": int(group["views"].fillna(0).sum()) if "views" in group.columns else 0,
+            "max_views": int(group["views"].fillna(0).max()) if "views" in group.columns else 0,
+            "best_score": round(float(group["total_score"].fillna(0).max()), 1) if "total_score" in group.columns else 0,
+            "avg_score": round(float(group["total_score"].fillna(0).mean()), 1) if "total_score" in group.columns else 0,
+            "video_sold_count": int(group["video_sold_count"].fillna(0).sum()) if "video_sold_count" in group.columns else int(group["item_sold"].fillna(0).sum()) if "item_sold" in group.columns else 0,
+            "source_mode": "video_aggregate",
+        })
 
-    # 更新历史记录
-    history_ids.update(task1_df["video_id"].tolist())
-    os.makedirs(HISTORY_DIR, exist_ok=True)
-    with open(history_file, "w") as f:
-        json.dump(list(history_ids), f)
-    print(f"   ✓ 历史记录已更新: {len(history_ids)} 条")
+    agg_df = pd.DataFrame(agg_rows)
+    if agg_df.empty:
+        return agg_df
 
-    preview(new_df)
-    return new_df
+    agg_df["decision_score"] = (
+        agg_df["best_score"] * 0.4 +
+        agg_df["avg_score"] * 0.2 +
+        agg_df["videos"].clip(upper=5) * 8 +
+        agg_df["creators"].clip(upper=5) * 6 +
+        agg_df["video_sold_count"].clip(upper=5000).div(100)
+    ).round(1)
+    agg_df = agg_df.sort_values(["decision_score", "sum_views", "videos"], ascending=False)
+    return agg_df.reset_index(drop=True)
 
 
-# =============================================================================
-# 需求3: 发现视频 美国 近3天 带货 播放量200K+
-# =============================================================================
-def task3_discover_video(page, region="US"):
-    """需求3: 发现视频"""
-    meta = get_region_meta(region)
-    print("\n" + "=" * 60)
-    print(f"需求3: 发现视频 {meta['name_zh']} 近3天 带货 播放量 >= 200K")
-    print("=" * 60)
-
+def collect_search_videos(page, region, prev_metrics, days, task_name, include_task1_shape=False):
     now = datetime.now()
-    begin = (now - timedelta(days=3)).strftime("%Y-%m-%d 00:00:00")
+    begin = (now - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00")
     end = now.strftime("%Y-%m-%d 23:59:59")
-
-    # 加载历史指标（用于跨天 growth_boost）
-    prev_metrics = load_metric_history("task3", region)
-    print(f"   历史指标: {len(prev_metrics)} 条")
-
     all_videos = []
+    seen_ids = set()
     page_no = 1
 
     while True:
@@ -554,7 +478,6 @@ def task3_discover_video(page, region="US"):
 
         data = result.get("result", {}).get("data", [])
         total = result.get("result", {}).get("total", 0)
-
         if not data:
             print("无数据")
             break
@@ -564,61 +487,167 @@ def task3_discover_video(page, region="US"):
 
         for v in data:
             play_count = v.get("playCountTotal", 0)
-
-            # 判断是否最近1天内的视频，降低播放量门槛
-            ct_str = v.get("createTime", "")
-            try:
-                ct_dt = datetime.strptime(ct_str[:19], "%Y-%m-%dT%H:%M:%S") if "T" in ct_str else datetime.strptime(ct_str[:19], "%Y-%m-%d %H:%M:%S")
-                is_recent = (datetime.now() - ct_dt).total_seconds() < 86400
-            except Exception:
-                is_recent = False
-            threshold = MIN_VIEWS_RECENT if is_recent else MIN_VIEWS
-            if play_count < threshold:
+            create_time = v.get("createTime", "") or ""
+            if not video_meets_threshold(create_time, play_count):
                 continue
 
-            # 排除分类
             cat1 = v.get("itemTkLv1Name", "") or ""
             cat2 = v.get("itemTkLv2Name", "") or ""
             item_name = v.get("itemName", "") or ""
-
             if is_excluded(item_name=f"{item_name} {cat1} {cat2}".lower()):
                 continue
 
             vid = str(v.get("videoId", ""))
+            if not vid or vid in seen_ids:
+                continue
+            seen_ids.add(vid)
+
             prev = prev_metrics.get(vid, {})
             likes = v.get("likeCountTotal", 0)
             shares = v.get("shareCountTotal", 0)
             comments = v.get("commentCountTotal", 0)
             video_sold = v.get("videoSplitSoldCount", 0)
             scores = calc_score(
-                play_count, v.get("createTime", ""),
+                play_count, create_time,
                 likes=likes, shares=shares, comments=comments,
                 sold_count=video_sold,
                 prev_views=prev.get("views"),
             )
 
-            all_videos.append({
+            video_url = v.get("tkVideoUrl") or ""
+            if not video_url:
+                author = v.get("authorUniqueId", "")
+                video_url = f"https://www.tiktok.com/@{author}/video/{vid}" if author else ""
+
+            row = {
                 "video_id": v.get("videoId"),
                 "video_cover": v.get("videoCoverUrl") or "",
                 "video_desc": (v.get("videoDesc") or "")[:100],
-                "video_url": v.get("tkVideoUrl") or "",
-                "create_time": v.get("createTime") or "",
+                "video_url": video_url,
+                "create_time": create_time,
                 "views": play_count,
                 "likes": likes,
                 "shares": shares,
                 "comments": comments,
-                "interaction_rate": v.get("interactionRate", 0),
-                "creator_name": v.get("authorNickname", ""),
+                "creator_name": v.get("authorNickname") or v.get("authorUniqueId", ""),
                 "creator_id": v.get("authorUniqueId", ""),
                 "creator_avatar": v.get("authorAvatarUrl") or "",
-                "creator_followers": v.get("authorFollowerCountTotal", 0),
+                "item_id": v.get("itemId") or "",
                 "item_name": item_name,
                 "item_cover": v.get("itemCoverUrl") or "",
                 "item_price": (v.get("priceAmount") or {}).get("region", ""),
-                "item_sold_total": v.get("itemSoldCountTotal", 0),
-                "item_category_l1": cat1,
-                "item_category_l2": cat2,
-                "video_sold_count": video_sold,
+                "item_sold": video_sold,
+                "source_mode": "search",
+                "views_score": scores["views_score"],
+                "freshness_score": scores["freshness_score"],
+                "engagement_score": scores["engagement_score"],
+                "velocity_score": scores["velocity_score"],
+                "sales_score": scores["sales_score"],
+            }
+            if include_task1_shape:
+                row.update({
+                    "rank": len(all_videos) + 1,
+                    "hashtags": "",
+                })
+            else:
+                row.update({
+                    "interaction_rate": v.get("interactionRate", 0),
+                    "creator_followers": v.get("authorFollowerCountTotal", 0),
+                    "item_sold_total": v.get("itemSoldCountTotal", 0),
+                    "item_category_l1": cat1,
+                    "item_category_l2": cat2,
+                    "video_sold_count": video_sold,
+                })
+            all_videos.append(row)
+
+        if min_play < MIN_VIEWS_RECENT or page_no >= 50:
+            break
+        page_no += 1
+        time.sleep(0.5)
+
+    if not all_videos:
+        add_diagnostic(task_name, "warning", "empty_result", "Search video collection returned no qualified rows", days=days)
+    return all_videos
+
+
+def collect_ranking_videos(page, region, prev_metrics, task_name):
+    meta = get_region_meta(region)
+    all_videos = []
+    page_no = 1
+    page_size = 24
+    page_signatures = []
+
+    while True:
+        print(f"   第 {page_no} 页...", end=" ")
+        query = urlencode({
+            "region": region,
+            "regionId": meta["region_id"],
+            "rankDay": 1,
+            "itemCategoryId": 0,
+            "sort": 10,
+            "pageNo": page_no,
+            "pageSize": page_size,
+        })
+        result = api_request(page, "GET", f"https://www.tabcut.com/api/ranking/videos?{query}")
+        data = result.get("result", {}).get("data", [])
+        total = result.get("result", {}).get("total", 0)
+
+        if not data:
+            print("无数据")
+            break
+
+        signature = tuple(str(v.get("videoId", "")) for v in data[:5])
+        page_signatures.append(signature)
+        min_play = min(v.get("playCount", 0) for v in data)
+        print(f"{len(data)} 条, 最小播放: {min_play:,}")
+
+        for v in data:
+            play_count = v.get("playCount", 0)
+            create_time = v.get("createTime", "") or ""
+            if not video_meets_threshold(create_time, play_count):
+                continue
+
+            items = v.get("itemList", [])
+            item_names = [str(it.get("itemName") or "").strip() for it in items]
+            item_names = [name for name in item_names if name]
+            item_name_str = " | ".join(item_names)
+            if is_excluded(item_name=item_name_str.lower()):
+                continue
+
+            vid = str(v.get("videoId", ""))
+            prev = prev_metrics.get(vid, {})
+            likes = v.get("likeCount", 0)
+            shares = v.get("shareCount", 0)
+            comments = v.get("commentCount", 0)
+            item_sold = items[0].get("soldCount", 0) if items else 0
+            scores = calc_score(
+                play_count, create_time,
+                likes=likes, shares=shares, comments=comments,
+                sold_count=item_sold,
+                prev_views=prev.get("views"),
+            )
+
+            all_videos.append({
+                "rank": v.get("rank"),
+                "video_id": v.get("videoId"),
+                "video_cover": v.get("videoCoverUrl") or "",
+                "video_desc": (v.get("videoDesc") or "")[:100],
+                "video_url": f"https://www.tiktok.com/@{v.get('authorName', '')}/video/{v.get('videoId', '')}",
+                "create_time": create_time,
+                "views": play_count,
+                "likes": likes,
+                "shares": shares,
+                "comments": comments,
+                "creator_name": v.get("authorName", ""),
+                "creator_id": v.get("authorUid", ""),
+                "creator_avatar": v.get("authorAvatarUrl") or "",
+                "item_id": items[0].get("itemId", "") if items else "",
+                "item_name": item_name_str,
+                "item_cover": items[0].get("itemCoverUrl", "") if items else "",
+                "item_price": items[0].get("skuPrice", "") if items else "",
+                "item_sold": item_sold,
+                "hashtags": ", ".join(h.get("hashtagName") or "" for h in (v.get("hashtags") or [])),
+                "source_mode": "ranking",
                 "views_score": scores["views_score"],
                 "freshness_score": scores["freshness_score"],
                 "engagement_score": scores["engagement_score"],
@@ -626,18 +655,139 @@ def task3_discover_video(page, region="US"):
                 "sales_score": scores["sales_score"],
             })
 
-        if min_play < MIN_VIEWS_RECENT:
+        if len(data) < page_size or min_play < MIN_VIEWS_RECENT:
             break
-
         page_no += 1
-        if page_no > 50:  # 安全限制
+        if total and page_no > ((total + page_size - 1) // page_size):
             break
         time.sleep(0.5)
 
-    df = pd.DataFrame(all_videos)
+    duplicate_pages = sum(1 for count in Counter(page_signatures).values() if count > 1)
+    is_broken = len(page_signatures) > 1 and duplicate_pages > 0
+    if is_broken:
+        add_diagnostic(task_name, "warning", "ranking_pagination_broken", "Ranking API pagination appears to repeat pages", pages=len(page_signatures), duplicate_signatures=duplicate_pages)
+    elif len(all_videos) <= page_size and len(page_signatures) > 1:
+        add_diagnostic(task_name, "warning", "ranking_low_unique_rows", "Ranking API returned multiple pages but very few unique rows", pages=len(page_signatures), unique_rows=len({str(v.get('video_id')) for v in all_videos}))
+        is_broken = True
+
+    return all_videos, {"pages": len(page_signatures), "is_broken": is_broken}
+
+
+# =============================================================================
+# 需求1: 视频榜 美国 日榜 播放量200K+
+# =============================================================================
+def task1_video_rank(page, region="US"):
+    """需求1: 视频榜日榜"""
+    meta = get_region_meta(region)
+    print("\n" + "=" * 60)
+    print(f"需求1: 视频榜 {meta['name_zh']} 日榜 播放量 >= 200K")
+    print("=" * 60)
+
+    prev_metrics = load_metric_history("task1", region)
+    print(f"   历史指标: {len(prev_metrics)} 条")
+
+    ranking_rows, ranking_meta = collect_ranking_videos(page, region, prev_metrics, "task1")
+    df = finalize_video_collection(ranking_rows)
+
+    if ranking_meta["is_broken"]:
+        print("\n   [DEGRADED] Ranking API 不稳定，启用显式降级模式")
+        fallback_rows = collect_search_videos(page, region, prev_metrics, days=2, task_name="task1", include_task1_shape=True)
+        fallback_df = finalize_video_collection(fallback_rows)
+        if len(fallback_df) > len(df):
+            add_diagnostic("task1", "warning", "fallback_activated", "Task1 switched to degraded search-backed mode", ranking_rows=len(df), fallback_rows=len(fallback_df))
+            df = fallback_df
+            if not df.empty:
+                df["source_mode"] = "search_fallback"
+        else:
+            add_diagnostic("task1", "warning", "fallback_skipped", "Fallback returned no improvement, keeping ranking output", ranking_rows=len(df), fallback_rows=len(fallback_df))
+    elif df.empty:
+        add_diagnostic("task1", "warning", "empty_result", "Task1 ranking collection produced no rows")
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    path = dated_region_path("task1_video_rank", region, today)
+    df.to_csv(path, index=False, encoding="utf-8-sig")
+    print(f"\n   ✓ 需求1完成: {path} ({len(df)} 条)")
+    preview(df)
+
     if not df.empty:
-        df = df.drop_duplicates(subset=["video_id"], keep="first")
-        df = finalize_scores(df)
+        save_metric_history("task1", region, df)
+
+    return df
+
+
+# =============================================================================
+# 需求2: 视频榜新素材发现（历史未出现过）
+# =============================================================================
+def task2_new_material(page, region="US", task1_df=None):
+    """需求2: 新素材榜，独立看首次出现且值得盯的视频"""
+    print("\n" + "=" * 60)
+    print("需求2: 新素材榜（首次出现 + 高新鲜度）")
+    print("=" * 60)
+
+    prev_metrics = load_metric_history("task2", region)
+    base_rows = collect_search_videos(page, region, prev_metrics, days=3, task_name="task2", include_task1_shape=False)
+    base_df = finalize_video_collection(base_rows)
+
+    history_file = history_path("video_history", region)
+    history_ids = set()
+    if os.path.exists(history_file):
+        with open(history_file, "r") as f:
+            history_ids = set(json.load(f))
+    print(f"   历史记录: {len(history_ids)} 条")
+
+    if base_df.empty:
+        add_diagnostic("task2", "warning", "empty_result", "Task2 source pool produced no rows")
+        print("   ⚠ 无视频数据")
+        return pd.DataFrame()
+
+    new_df = base_df[~base_df["video_id"].astype(str).isin({str(v) for v in history_ids})].copy()
+    if task1_df is not None and not task1_df.empty:
+        new_df = trim_task_overlap(task1_df.head(20), new_df, key="video_id", task_name="task2")
+
+    if not new_df.empty:
+        new_df = new_df.sort_values(["freshness_score", "velocity_score", "engagement_score", "views"], ascending=False)
+    print(f"   新素材: {len(new_df)} 条 (源池 {len(base_df)} 条)")
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    path = dated_region_path("task2_new_material", region, today)
+    new_df.to_csv(path, index=False, encoding="utf-8-sig")
+    print(f"   ✓ 需求2完成: {path}")
+
+    history_ids.update(base_df["video_id"].astype(str).tolist())
+    os.makedirs(HISTORY_DIR, exist_ok=True)
+    with open(history_file, "w") as f:
+        json.dump(list(history_ids), f)
+    print(f"   ✓ 历史记录已更新: {len(history_ids)} 条")
+
+    if not new_df.empty:
+        save_metric_history("task2", region, new_df)
+    preview(new_df)
+    return new_df
+
+
+# =============================================================================
+# 需求3: 发现视频 美国 近3天 带货 播放量200K+
+# =============================================================================
+def task3_discover_video(page, region="US", task1_df=None, task2_df=None):
+    """需求3: 高潜商品榜，从视频侧聚合商品信号"""
+    meta = get_region_meta(region)
+    print("\n" + "=" * 60)
+    print(f"需求3: 高潜商品榜 {meta['name_zh']} 近3天视频聚合")
+    print("=" * 60)
+
+    prev_metrics = load_metric_history("task3", region)
+    print(f"   历史指标: {len(prev_metrics)} 条")
+
+    rows = collect_search_videos(page, region, prev_metrics, days=3, task_name="task3", include_task1_shape=False)
+    video_df = finalize_video_collection(rows)
+    if task1_df is not None and not task1_df.empty:
+        video_df = trim_task_overlap(task1_df.head(30), video_df, key="video_id", task_name="task3")
+    if task2_df is not None and not task2_df.empty:
+        video_df = trim_task_overlap(task2_df.head(20), video_df, key="video_id", task_name="task3")
+
+    df = build_hot_product_candidates(video_df)
+    if df.empty:
+        add_diagnostic("task3", "warning", "empty_result", "Task3 product aggregation produced no rows")
 
     today = datetime.now().strftime("%Y-%m-%d")
     path = dated_region_path("task3_discover_video", region, today)
@@ -645,9 +795,8 @@ def task3_discover_video(page, region="US"):
     print(f"\n   ✓ 需求3完成: {path} ({len(df)} 条)")
     preview(df)
 
-    # 保存当天指标到历史
-    if not df.empty:
-        save_metric_history("task3", region, df)
+    if not video_df.empty:
+        save_metric_history("task3", region, video_df)
 
     return df
 
@@ -775,6 +924,19 @@ def task4_new_product(page, region="US"):
     return new_df
 
 
+def write_diagnostics(region):
+    today = datetime.now().strftime("%Y-%m-%d")
+    path = diagnostics_path(region, today)
+    payload = {
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "region": region,
+        "entries": RUN_DIAGNOSTICS,
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    print(f"\n   ✓ Diagnostics 已写入: {path} ({len(RUN_DIAGNOSTICS)} 条)")
+
+
 def preview(df, n=10):
     """打印前N条预览"""
     if df.empty:
@@ -803,6 +965,7 @@ def preview(df, n=10):
 
 
 def main():
+    RUN_DIAGNOSTICS.clear()
     parser = argparse.ArgumentParser()
     parser.add_argument("--region", default="US")
     args = parser.parse_args()
@@ -831,11 +994,11 @@ def main():
             # 需求1: 视频榜日榜
             df1 = task1_video_rank(page, region=region)
 
-            # 需求2: 新素材发现（基于需求1数据）
+            # 需求2: 新素材发现（独立新鲜池，避免与需求1重复）
             df2 = task2_new_material(page, region=region, task1_df=df1)
 
-            # 需求3: 发现视频
-            df3 = task3_discover_video(page, region=region)
+            # 需求3: 高潜商品榜（从视频侧聚合，避免继续做重复视频表）
+            df3 = task3_discover_video(page, region=region, task1_df=df1, task2_df=df2)
 
             # 需求4: 商品榜新品
             df4 = task4_new_product(page, region=region)
@@ -846,17 +1009,19 @@ def main():
             print("=" * 60)
             print(f"   需求1 视频榜日榜: {len(df1)} 条")
             print(f"   需求2 新素材发现: {len(df2)} 条")
-            print(f"   需求3 发现视频:   {len(df3)} 条")
+            print(f"   需求3 高潜商品榜: {len(df3)} 条")
             print(f"   需求4 新品发现:   {len(df4)} 条")
             print(f"\n   文件保存在: {OUTPUT_DIR}")
 
         except Exception as e:
+            add_diagnostic("run", "error", "unhandled_exception", str(e))
             print(f"\n错误: {e}")
             import traceback
             traceback.print_exc()
             page.screenshot(path=os.path.join(OUTPUT_DIR, "error_screenshot.png"))
 
         finally:
+            write_diagnostics(region)
             time.sleep(5)
             browser.close()
 
