@@ -19,9 +19,12 @@ REGIONS = {"US": "美国", "GB": "英国"}
 
 
 def read_csv_safe(path):
-    if os.path.exists(path):
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    try:
         return pd.read_csv(path)
-    return pd.DataFrame()
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
 
 
 def fmt_number(n):
@@ -105,7 +108,7 @@ def generate_html(region="US"):
     if df1.empty:
         for f in sorted(os.listdir(OUTPUT_DIR), reverse=True):
             if f.startswith(f"task1_video_rank_{region}_") and f.endswith(".csv"):
-                df1 = pd.read_csv(os.path.join(OUTPUT_DIR, f))
+                df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f))
                 today = f.replace(f"task1_video_rank_{region}_", "").replace(".csv", "")
                 df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
                 df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))

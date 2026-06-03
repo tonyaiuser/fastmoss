@@ -45,9 +45,12 @@ def get_signed_url():
 
 
 def read_csv_safe(path):
-    if os.path.exists(path):
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    try:
         return pd.read_csv(path)
-    return pd.DataFrame()
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
 
 
 def fmt_number(n):

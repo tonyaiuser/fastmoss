@@ -105,28 +105,44 @@ GLOBAL_IP_KEYWORDS = [
 ]
 
 
-def login(page):
-    """登录 TabCut"""
-    print("[登录] 正在登录 TabCut...")
-    page.goto("https://www.tabcut.com/workbench?loginType=signIn")
-    page.wait_for_load_state("networkidle")
-    time.sleep(3)
+def login(page, max_attempts=3):
+    """登录 TabCut，带重试，避免偶发 networkidle 超时直接整次失败"""
+    login_url = "https://www.tabcut.com/en-US/workbench?loginType=signIn"
 
-    page.locator('input[name="email"]').fill(USERNAME)
-    page.locator('input[type="password"]').fill(PASSWORD)
-    time.sleep(0.5)
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            print(f"[登录] 正在登录 TabCut... (attempt {attempt}/{max_attempts})")
+            page.goto(login_url, wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(2500)
 
-    page.evaluate("""
-        () => {
-            document.querySelectorAll('button').forEach(b => {
-                if (b.textContent.trim() === 'Log in') b.click();
-            });
-        }
-    """)
+            page.locator('input[name="email"]').first.wait_for(timeout=15000)
+            page.locator('input[name="email"]').fill(USERNAME)
+            page.locator('input[type="password"]').fill(PASSWORD)
+            page.wait_for_timeout(800)
 
-    page.wait_for_load_state("networkidle")
-    time.sleep(5)
-    print(f"   ✓ 登录完成, URL: {page.url}")
+            page.evaluate("""
+                () => {
+                    const btn = Array.from(document.querySelectorAll('button')).find(
+                        b => (b.textContent || '').trim() === 'Log in'
+                    );
+                    if (btn) btn.click();
+                }
+            """)
+
+            page.wait_for_timeout(5000)
+            print(f"   ✓ 登录完成, URL: {page.url}")
+            return
+        except Exception as e:
+            last_error = e
+            add_diagnostic("login", "warning", "login_retry", "Login attempt failed", attempt=attempt, error=str(e))
+            try:
+                page.goto("about:blank", wait_until="load", timeout=10000)
+            except Exception:
+                pass
+            page.wait_for_timeout(2000)
+
+    raise last_error
 
 
 def api_request(page, method, url, payload=None, headers=None, timeout=30000):
@@ -791,7 +807,15 @@ def task3_discover_video(page, region="US", task1_df=None, task2_df=None):
 
     today = datetime.now().strftime("%Y-%m-%d")
     path = dated_region_path("task3_discover_video", region, today)
-    df.to_csv(path, index=False, encoding="utf-8-sig")
+    if df.empty:
+        pd.DataFrame(columns=[
+            "item_name", "item_cover", "video_count", "views", "likes",
+            "avg_score", "total_score", "creator_names", "video_ids",
+            "video_cover", "video_url", "create_time", "item_category_l1",
+            "video_sold_count"
+        ]).to_csv(path, index=False, encoding="utf-8-sig")
+    else:
+        df.to_csv(path, index=False, encoding="utf-8-sig")
     print(f"\n   ✓ 需求3完成: {path} ({len(df)} 条)")
     preview(df)
 
