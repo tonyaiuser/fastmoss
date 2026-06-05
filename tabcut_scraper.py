@@ -106,36 +106,101 @@ GLOBAL_IP_KEYWORDS = [
 
 
 def login(page, max_attempts=3):
-    """登录 TabCut，带重试，避免偶发 networkidle 超时直接整次失败"""
-    login_url = "https://www.tabcut.com/en-US/workbench?loginType=signIn"
+    """登录 TabCut，兼容英文/旧版入口与弹层式登录表单。"""
+    login_urls = [
+        "https://www.tabcut.com/en-US/workbench?loginType=signIn",
+        "https://www.tabcut.com/workbench?loginType=signIn",
+        "https://www.tabcut.com/en-US/workbench",
+        "https://www.tabcut.com/workbench",
+    ]
+    email_selectors = [
+        'input[name="email"]',
+        'input[type="email"]',
+        'input[placeholder*="Email"]',
+        'input[placeholder*="email"]',
+    ]
+    password_selectors = [
+        'input[type="password"]',
+        'input[name="password"]',
+        'input[placeholder*="Password"]',
+        'input[placeholder*="password"]',
+    ]
 
     last_error = None
     for attempt in range(1, max_attempts + 1):
         try:
             print(f"[登录] 正在登录 TabCut... (attempt {attempt}/{max_attempts})")
-            page.goto(login_url, wait_until="domcontentloaded", timeout=45000)
-            page.wait_for_timeout(2500)
+            email_locator = None
+            password_locator = None
 
-            page.locator('input[name="email"]').first.wait_for(timeout=15000)
-            page.locator('input[name="email"]').fill(USERNAME)
-            page.locator('input[type="password"]').fill(PASSWORD)
+            for login_url in login_urls:
+                try:
+                    page.goto(login_url, wait_until="domcontentloaded", timeout=45000)
+                    page.wait_for_timeout(2500)
+
+                    page.evaluate("""
+                        () => {
+                            const texts = ['log in', 'login', 'sign in', 'email'];
+                            const clickable = Array.from(document.querySelectorAll('button, a, div, span'));
+                            for (const el of clickable) {
+                                const t = (el.textContent || '').trim().toLowerCase();
+                                if (texts.some(x => t === x || t.includes(x))) {
+                                    try { el.click(); } catch (e) {}
+                                }
+                            }
+                        }
+                    """)
+                    page.wait_for_timeout(1500)
+
+                    for sel in email_selectors:
+                        loc = page.locator(sel).first
+                        if loc.count() > 0:
+                            try:
+                                loc.wait_for(timeout=4000)
+                                email_locator = loc
+                                break
+                            except Exception:
+                                pass
+                    for sel in password_selectors:
+                        loc = page.locator(sel).first
+                        if loc.count() > 0:
+                            try:
+                                loc.wait_for(timeout=2000)
+                                password_locator = loc
+                                break
+                            except Exception:
+                                pass
+
+                    if email_locator and password_locator:
+                        break
+                except Exception:
+                    continue
+
+            if not (email_locator and password_locator):
+                page.screenshot(path=os.path.join(OUTPUT_DIR, f"login_probe_attempt_{attempt}.png"))
+                snippet = page.locator('body').inner_text(timeout=3000)[:800]
+                raise RuntimeError(f"login form not found, url={page.url}, body={snippet}")
+
+            email_locator.fill(USERNAME)
+            password_locator.fill(PASSWORD)
             page.wait_for_timeout(800)
 
             page.evaluate("""
                 () => {
-                    const btn = Array.from(document.querySelectorAll('button')).find(
-                        b => (b.textContent || '').trim() === 'Log in'
+                    const candidates = ['log in', 'login', 'sign in', 'continue'];
+                    const btn = Array.from(document.querySelectorAll('button, a')).find(
+                        b => candidates.some(x => ((b.textContent || '').trim().toLowerCase() === x || (b.textContent || '').trim().toLowerCase().includes(x)))
                     );
                     if (btn) btn.click();
                 }
             """)
 
-            page.wait_for_timeout(5000)
+            page.wait_for_timeout(6000)
             print(f"   ✓ 登录完成, URL: {page.url}")
             return
         except Exception as e:
             last_error = e
-            add_diagnostic("login", "warning", "login_retry", "Login attempt failed", attempt=attempt, error=str(e))
+            add_diagnostic("login", "warning", "login_retry", "Login attempt failed", attempt=attempt, error=str(e), url=page.url)
             try:
                 page.goto("about:blank", wait_until="load", timeout=10000)
             except Exception:
@@ -1002,6 +1067,7 @@ def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(HISTORY_DIR, exist_ok=True)
+    success = False
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -1036,6 +1102,7 @@ def main():
             print(f"   需求3 高潜商品榜: {len(df3)} 条")
             print(f"   需求4 新品发现:   {len(df4)} 条")
             print(f"\n   文件保存在: {OUTPUT_DIR}")
+            success = True
 
         except Exception as e:
             add_diagnostic("run", "error", "unhandled_exception", str(e))
@@ -1048,6 +1115,9 @@ def main():
             write_diagnostics(region)
             time.sleep(5)
             browser.close()
+
+    if not success:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

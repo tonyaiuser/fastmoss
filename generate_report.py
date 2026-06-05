@@ -105,16 +105,8 @@ def generate_html(region="US"):
     df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
     diagnostics_path = os.path.join(OUTPUT_DIR, f"diagnostics_{region}_{today}.json")
 
-    if df1.empty:
-        for f in sorted(os.listdir(OUTPUT_DIR), reverse=True):
-            if f.startswith(f"task1_video_rank_{region}_") and f.endswith(".csv"):
-                df1 = read_csv_safe(os.path.join(OUTPUT_DIR, f))
-                today = f.replace(f"task1_video_rank_{region}_", "").replace(".csv", "")
-                df2 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task2_new_material_{region}_{today}.csv"))
-                df3 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task3_discover_video_{region}_{today}.csv"))
-                df4 = read_csv_safe(os.path.join(OUTPUT_DIR, f"task4_new_product_{region}_{today}.csv"))
-                diagnostics_path = os.path.join(OUTPUT_DIR, f"diagnostics_{region}_{today}.json")
-                break
+    if df1.empty and df2.empty and df3.empty and df4.empty:
+        raise RuntimeError(f"No fresh CSV outputs found for {region} on {today}, refuse to fall back to stale data")
 
     diag_entries = []
     if os.path.exists(diagnostics_path):
