@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巴巴塔自动选品系统 - 英国 - 2026-07-25</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#1f2937;font-size:13px}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px 28px}
+.header h1{font-size:22px;margin-bottom:2px}
+.header .sub{opacity:.85;font-size:13px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e5e7eb;position:sticky;top:0;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.tab{padding:12px 20px;cursor:pointer;font-weight:500;font-size:13px;border-bottom:3px solid transparent;color:#6b7280;white-space:nowrap}
+.tab:hover{color:#4f46e5;background:#f9fafb}
+.tab.active{color:#4f46e5;border-bottom-color:#4f46e5}
+.badge{background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:5px}
+.tc{display:none;padding:16px 24px}
+.tc.active{display:block}
+.stats{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.hero{padding:16px 24px;background:#fff;border-bottom:1px solid #e5e7eb}
+.hero-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.panel{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.diag{padding:8px 10px;border-radius:8px;margin-bottom:8px;font-size:12px}
+.diag.info{background:#eff6ff;color:#1d4ed8}
+.diag.warning{background:#fff7ed;color:#c2410c}
+.diag.error{background:#fef2f2;color:#dc2626}
+.sc{background:#fff;border-radius:10px;padding:12px 16px;flex:1;min-width:130px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sc .lb{color:#6b7280;font-size:11px;margin-bottom:2px}
+.sc .vl{font-size:22px;font-weight:700}
+.toolbar{margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar input[type=text]{padding:7px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:280px;outline:none}
+.toolbar input[type=text]:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.toolbar label{font-size:12px;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:4px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);table-layout:auto}
+th{background:#f9fafb;padding:8px 10px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:600;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{background:#eef2ff;color:#4f46e5}
+th .si{margin-left:3px;opacity:.3;font-size:9px}
+th.asc .si,th.desc .si{opacity:1;color:#4f46e5}
+td{padding:8px 10px;border-top:1px solid #f3f4f6;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.center{text-align:center}
+.right{text-align:right}
+.nowrap{white-space:nowrap}
+.num{font-weight:600;color:#ef4444}
+.empty{text-align:center;padding:40px;color:#9ca3af}
+.score{display:inline-block;font-weight:700;font-size:18px;min-width:32px;text-align:center}
+.hi{color:#10b981}.mid{color:#f59e0b}.lo{color:#6b7280}
+.tag-burst{display:inline-block;background:#fee2e2;color:#dc2626;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}
+.tag-engage{display:inline-block;background:#dbeafe;color:#2563eb;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}
+.thumb{object-fit:cover;border-radius:6px;cursor:pointer;display:block}
+.img-placeholder{background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:10px}
+.cell-main{max-width:220px}
+.creator{font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.desc{color:#6b7280;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;margin-top:1px}
+.cell-item{max-width:240px}
+.item-cn{font-weight:500;font-size:12px;color:#1e40af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.item-en{font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;margin-top:1px}
+.cat{font-size:10px;color:#6b7280;margin-top:1px}
+.tag{display:inline-block;background:#f3f4f6;color:#6b7280;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px}
+a{color:#3b82f6;text-decoration:none;font-size:12px}
+a:hover{text-decoration:underline}
+.fresh{color:#10b981;font-weight:600}
+.hidden-row{display:none!important}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:9999;cursor:pointer;justify-content:center;align-items:center}
+.modal.show{display:flex}
+.modal img{max-width:90vw;max-height:90vh;border-radius:8px}
+@media(max-width:768px){
+.header{padding:14px 16px}
+.header h1{font-size:18px}
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:10px 12px;font-size:12px}
+.tc{padding:10px 12px}
+.stats{gap:8px}
+.sc{padding:10px 12px;min-width:80px}
+.sc .vl{font-size:18px}
+.toolbar{flex-direction:column;align-items:stretch}
+.toolbar input[type=text]{width:100%}
+table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+thead{display:table;width:100%;table-layout:auto}
+tbody{display:table;width:100%;table-layout:auto}
+td,th{padding:6px 6px;font-size:11px}
+.thumb{width:36px!important;height:36px!important}
+.img-placeholder{width:36px!important;height:36px!important}
+.cell-main{max-width:120px}
+.creator{font-size:11px;max-width:110px}
+.desc{display:none}
+.cell-item{max-width:140px}
+.item-cn{font-size:11px;max-width:130px}
+.item-en{display:none}
+.score{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>巴巴塔自动选品系统</h1>
+<div class="sub">数据日期: 2026-07-25 | 生成: 08:40:18 | 地区: 英国 (GB)</div>
+</div>
+<div class="hero">
+  <div class="hero-grid">
+    <div class="panel">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">今日决策视图</div>
+      <div style="color:#6b7280;line-height:1.8;">A 看高分爆热视频, B 看首次出现的新素材, C 看多视频聚合后的高潜商品, D 看商品榜新增商品。</div>
+    </div>
+  </div>
+</div>
+<div class="tabs">
+<div class="tab active" onclick="sw(0)">爆热视频 <span class="badge">26</span></div>
+<div class="tab" onclick="sw(1)">新素材榜 <span class="badge">2</span></div>
+<div class="tab" onclick="sw(2)">高潜商品 <span class="badge">0</span></div>
+<div class="tab" onclick="sw(3)">商品榜新品 <span class="badge">0</span></div>
+</div>
+<div class="modal" id="modal" onclick="this.classList.remove('show')"><img id="modalImg"></div>
+
+<!-- Tab 0: 视频榜 -->
+<div class="tc active" id="t0">
+<div class="stats">
+<div class="sc"><div class="lb">总视频数</div><div class="vl">26</div></div>
+<div class="sc"><div class="lb">最高播放</div><div class="vl">3.4M</div></div>
+<div class="sc"><div class="lb">平均播放</div><div class="vl">740.7K</div></div>
+<div class="sc"><div class="lb">最高评分</div><div class="vl">42</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索达人、商品..." oninput="ft(this,'tb0')">
+<label><input type="checkbox" checked onchange="f7(this,'tb0')"> 隐藏7天前</label>
+</div>
+<table id="tb0"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr data-time="2026-07-21T02:07" data-views="377251" data-score="41.8">
+<td class="center">1</td>
+<td class="center"><span class="score mid">42</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729508554052705107/17295085540527051070.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729508554052705107/17295085540527051070.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式纯色挂脖上衣和阔腿裤运动套装，休闲无袖上衣</div>
+  <div class="item-en">Women's Solid Halter Neck Top & Wide Leg Pants Sports Set, C</div>
+  
+</td>
+<td class="right num">377.3K</td>
+<td class="right">24.1K</td>
+<td class="nowrap">2026-07-21T02:07</td>
+<td class="center"><a href="https://www.tiktok.com/@ciaraaconnolly/video/7664673336575773974" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ciaraaconnolly</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-22T01:02" data-views="718441" data-score="39.9">
+<td class="center">2</td>
+<td class="center"><span class="score lo">40</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729553085169179217/17295530851691792170.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729553085169179217/17295530851691792170.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Condimaniac 100% 英国番茄酱 - 番茄酱采用所有英国原料（</div>
+  <div class="item-en">Condimaniac 100% British Ketchup - Tomato Ketchup with all B</div>
+  
+</td>
+<td class="right num">718.4K</td>
+<td class="right">23.9K</td>
+<td class="nowrap">2026-07-22T01:02</td>
+<td class="center"><a href="https://www.tiktok.com/@condimaniac/video/7665027791171161367" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">condimaniac</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-19T14:32" data-views="869870" data-score="34.1">
+<td class="center">3</td>
+<td class="center"><span class="score lo">34</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7664123076757490966.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729819821856365097/17298198218563650970.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">互动音乐毛绒玩具套装 – 香蕉、草莓、胡萝卜电动毛绒玩具</div>
+  <div class="item-en">Interactive Music Plush Toy Set – Banana, Strawberry & Carro</div>
+  
+</td>
+<td class="right num">869.9K</td>
+<td class="right">8.4K</td>
+<td class="nowrap">2026-07-19T14:32</td>
+<td class="center"><a href="https://www.tiktok.com/@tianathomas94/video/7664123076757490966" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">tianathomas94</div>
+  <div class="desc">This interactive teddy is about to keep me entertained for h</div>
+</td>
+</tr>
+<tr data-time="2026-06-07T21:12" data-views="3446105" data-score="28.7">
+<td class="center">4</td>
+<td class="center"><span class="score lo">29</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729504857908090891/17295048579080908910.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729504857908090891/17295048579080908910.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Yass Clean F'king 魔术织物和室内装饰泡沫清洁剂 3 件装 200 毫升可去除 S</div>
+  <div class="item-en">Yass Clean F'king Magic Fabric and Upholstery Foam Cleaner 3</div>
+  
+</td>
+<td class="right num">3.4M</td>
+<td class="right">5.7K</td>
+<td class="nowrap">2026-06-07T21:12</td>
+<td class="center"><a href="https://www.tiktok.com/@seanontheshop/video/7648540380790672662" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">seanontheshop</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-18T23:45" data-views="729970" data-score="28.5">
+<td class="center">5</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729404387834957415/17294043878349574150.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729404387834957415/17294043878349574150.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">铁能量+</div>
+  <div class="item-en">Iron Energy+</div>
+  
+</td>
+<td class="right num">730.0K</td>
+<td class="right">13.8K</td>
+<td class="nowrap">2026-06-18T23:45</td>
+<td class="center"><a href="https://www.tiktok.com/@rianne.eliza/video/7652762018360937750" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">rianne.eliza</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-10T15:43" data-views="789193" data-score="27.4">
+<td class="center">6</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729759736508816322/17297597365088163220.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729759736508816322/17297597365088163220.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Cuisinart Tri Zone 13.6L 空气炸锅和烤箱不锈钢</div>
+  <div class="item-en">Cuisinart Tri Zone 13.6L Air Fryer & Oven Stainless Steel</div>
+  
+</td>
+<td class="right num">789.2K</td>
+<td class="right">5.9K</td>
+<td class="nowrap">2026-07-10T15:43</td>
+<td class="center"><a href="https://www.tiktok.com/@tiktokproductgems/video/7660801783777758486" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">tiktokproductgems</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-11T20:06" data-views="1794360" data-score="27.1">
+<td class="center">7</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729597646131923479/17295976461319234790.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729597646131923479/17295976461319234790.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">OK Play：适合所有年龄段的轻松旅行游戏 |适合儿童和成人的最佳家庭旅行游戏</div>
+  <div class="item-en">OK Play: Easy Travel Game for All Ages | Best Family Travel </div>
+  
+</td>
+<td class="right num">1.8M</td>
+<td class="right">25.8K</td>
+<td class="nowrap">2026-06-11T20:06</td>
+<td class="center"><a href="https://www.tiktok.com/@bigpotatogames/video/7650108165219978518" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bigpotatogames</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-17T01:25" data-views="259693" data-score="25.0">
+<td class="center">8</td>
+<td class="center"><span class="score lo">25</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7652045715731991830.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729762620824197134/17297626208241971340.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">SupremeTan SUPERIOR 奢华美黑霜 - 香草肽高级形式</div>
+  <div class="item-en">SupremeTan SUPERIOR Luxury Tanning Cream - Vanilla Peptide P</div>
+  
+</td>
+<td class="right num">259.7K</td>
+<td class="right">3.9K</td>
+<td class="nowrap">2026-06-17T01:25</td>
+<td class="center"><a href="https://www.tiktok.com/@jessicashoppyshop/video/7652045715731991830" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">jessicashoppyshop</div>
+  <div class="desc">The tanning accelerator goat - especially for it to work on </div>
+</td>
+</tr>
+<tr data-time="2026-06-26T19:15" data-views="1485919" data-score="21.8">
+<td class="center">9</td>
+<td class="center"><span class="score lo">22</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【夏季促销】魔法水精灵DIY绘画玩具，多彩漂浮水精灵套装，一个</div>
+  <div class="item-en">[Summer Sale]Magic Water Elf DIY Painting Toy, ColorfulFloat</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">2.3K</td>
+<td class="nowrap">2026-06-26T19:15</td>
+<td class="center"><a href="https://www.tiktok.com/@focuk8899/video/7655582974712384790" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">focuk8899</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-14T03:55" data-views="1526274" data-score="20.8">
+<td class="center">10</td>
+<td class="center"><span class="score lo">21</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729814660848196586/17298146608481965860.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729814660848196586/17298146608481965860.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">ECOVOX MiFi 旅行移动 WiFi 热点 |无需SIM卡，13小时电池l</div>
+  <div class="item-en">ECOVOX MiFi Travel Mobile WiFi Hotspot | No SIM card require</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">13.5K</td>
+<td class="nowrap">2026-06-14T03:55</td>
+<td class="center"><a href="https://www.tiktok.com/@unstoppabledre/video/7650971217872129302" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">unstoppabledre</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-07T00:20" data-views="246376" data-score="19.6">
+<td class="center">11</td>
+<td class="center"><span class="score lo">20</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729675698195961873/17296756981959618730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729675698195961873/17296756981959618730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">绣球花“Groundbreaker Blush”，在 14 厘米花盆中种植</div>
+  <div class="item-en">Hydrangea 'Groundbreaker Blush', Established Plant in 14cm P</div>
+  
+</td>
+<td class="right num">246.4K</td>
+<td class="right">5.2K</td>
+<td class="nowrap">2026-07-07T00:20</td>
+<td class="center"><a href="https://www.tiktok.com/@you.garden/video/7659450609371745558" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">you.garden</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-10T18:00" data-views="297623" data-score="19.3">
+<td class="center">12</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729499282566257530/17294992825662575300.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729499282566257530/17294992825662575300.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">George Foreman 烧烤炉，电烤架，适合室内和室外使用，Eas</div>
+  <div class="item-en">George Foreman BBQ Grill, Electric Grill, Suitable for Indoo</div>
+  
+</td>
+<td class="right num">297.6K</td>
+<td class="right">3.2K</td>
+<td class="nowrap">2026-06-10T18:00</td>
+<td class="center"><a href="https://www.tiktok.com/@chunky_nic/video/7649641632043797762" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">chunky_nic</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-05T05:04" data-views="607211" data-score="18.7">
+<td class="center">13</td>
+<td class="center"><span class="score lo">19</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729776548444805683/17297765484448056830.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729776548444805683/17297765484448056830.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">酷感应机器人手臂，2.4GHZ 运动跟踪冲击波，运动控制自动</div>
+  <div class="item-en">Cool Inductive Robot Arm,2.4GHZ Motion-Tracked Blaster, Moti</div>
+  
+</td>
+<td class="right num">607.2K</td>
+<td class="right">21.4K</td>
+<td class="nowrap">2026-07-05T05:04</td>
+<td class="center"><a href="https://www.tiktok.com/@hackneysfinest/video/7658781756132265238" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">hackneysfinest</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-16T04:20" data-views="522736" data-score="18.6">
+<td class="center">14</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7651719795460672790.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729639544792128484/17296395447921284840.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">磁性积木-100PCS 磁性积木 磁性积木 堆叠，搭建 M</div>
+  <div class="item-en">Magnetic Blocks-100PCS Magnetic Building Blocks Magnetic Til</div>
+  
+</td>
+<td class="right num">522.7K</td>
+<td class="right">899</td>
+<td class="nowrap">2026-06-16T04:20</td>
+<td class="center"><a href="https://www.tiktok.com/@nimradeals1/video/7651719795460672790" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">nimradeals1</div>
+  <div class="desc">Magnetic Blocks-100PCS Magnetic Building Blocks Magnetic Til</div>
+</td>
+</tr>
+<tr data-time="2026-06-29T20:52" data-views="573592" data-score="18.6">
+<td class="center">15</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729794975494871925/17297949754948719250.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729794975494871925/17297949754948719250.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[2 件套] WOLTU 梳妆台带大镜子和玻璃台面，梳妆台带</div>
+  <div class="item-en">[2 Packages] WOLTU Dressing Table with Large Mirror and Glas</div>
+  
+</td>
+<td class="right num">573.6K</td>
+<td class="right">4.7K</td>
+<td class="nowrap">2026-06-29T20:52</td>
+<td class="center"><a href="https://www.tiktok.com/@amyslifescript24_7/video/7656799455848500503" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">amyslifescript24_7</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-05-13T16:48" data-views="397268" data-score="18.0">
+<td class="center">16</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7639287792593407254.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729668303263407102/17296683032634071020.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">迷你探索套装</div>
+  <div class="item-en">The Mini Discovery Set</div>
+  
+</td>
+<td class="right num">397.3K</td>
+<td class="right">736</td>
+<td class="nowrap">2026-05-13T16:48</td>
+<td class="center"><a href="https://www.tiktok.com/@ben_approved/video/7639287792593407254" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ben_approved</div>
+  <div class="desc">The ordinary discovery set! 😍 #theordinary #skincareforbegin</div>
+</td>
+</tr>
+<tr data-time="2026-07-14T19:36" data-views="605586" data-score="17.8">
+<td class="center">17</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7662346192369782018.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729713082532076538/17297130825320765380.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">卡尼尔 | Crema 面部冰糕 2x85ml</div>
+  <div class="item-en">GARNIER | Crema facial Sorbete de 2x85ml</div>
+  
+</td>
+<td class="right num">605.6K</td>
+<td class="right">304</td>
+<td class="nowrap">2026-07-14T19:36</td>
+<td class="center"><a href="https://www.tiktok.com/@pilaarbc/video/7662346192369782018" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">pilaarbc</div>
+  <div class="desc">#ad Publicidad. 🥵 Con este calor sentía que mi piel se estab</div>
+</td>
+</tr>
+<tr data-time="2026-06-28T19:15" data-views="817742" data-score="17.7">
+<td class="center">18</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【夏季促销】魔法水精灵DIY绘画玩具，多彩漂浮水精灵套装，一个</div>
+  <div class="item-en">[Summer Sale]Magic Water Elf DIY Painting Toy, ColorfulFloat</div>
+  
+</td>
+<td class="right num">817.7K</td>
+<td class="right">880</td>
+<td class="nowrap">2026-06-28T19:15</td>
+<td class="center"><a href="https://www.tiktok.com/@focuk8899/video/7656008128122621206" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">focuk8899</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-30T21:23" data-views="279463" data-score="17.2">
+<td class="center">19</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729554479247563473/17295544792475634730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729554479247563473/17295544792475634730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">120W 移动电源，50000mAh 紧凑型便携式 USB 快速充电，可多次充电</div>
+  <div class="item-en">120W Power Bank, 50000mAh Compact Portable USB Fast Charging</div>
+  
+</td>
+<td class="right num">279.5K</td>
+<td class="right">128</td>
+<td class="nowrap">2026-06-30T21:23</td>
+<td class="center"><a href="https://www.tiktok.com/@shopnplace1/video/7657178505725152544" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shopnplace1</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-06T18:51" data-views="262788" data-score="17.1">
+<td class="center">20</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7659365872309456150.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729791252554095538/17297912525540955380.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">磁性无线充电宝 5000mAh，磁性便携式充电器，高达 15W 有线</div>
+  <div class="item-en">Magnetic Wireless Power Bank 5000mAh, Magnetic Portable Char</div>
+  
+</td>
+<td class="right num">262.8K</td>
+<td class="right">238</td>
+<td class="nowrap">2026-07-06T18:51</td>
+<td class="center"><a href="https://www.tiktok.com/@daisy89107/video/7659365872309456150" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">daisy89107</div>
+  <div class="desc">✌️😭🎁#giftdea #tiktokmadebuythis #wirelesspowerbank #tiktoksh</div>
+</td>
+</tr>
+<tr data-time="2026-07-13T00:00" data-views="374124" data-score="16.6">
+<td class="center">21</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729836250266376702/17298362502663767020.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729836250266376702/17298362502663767020.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">SPZK 冰雪机带数字 LED 显示屏，5 合 1 冷冻饮料机 — One-T</div>
+  <div class="item-en">SPZK Slushie Machine with Digital LED Display, 5-in-1 Frozen</div>
+  
+</td>
+<td class="right num">374.1K</td>
+<td class="right">1.8K</td>
+<td class="nowrap">2026-07-13T00:00</td>
+<td class="center"><a href="https://www.tiktok.com/@shabzofficial/video/7661644924315520278" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shabzofficial</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-12T16:15" data-views="847349" data-score="16.4">
+<td class="center">22</td>
+<td class="center"><span class="score lo">16</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729584616734300998/17295846167343009980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【夏季促销】魔法水精灵DIY绘画玩具，多彩漂浮水精灵套装，一个</div>
+  <div class="item-en">[Summer Sale]Magic Water Elf DIY Painting Toy, ColorfulFloat</div>
+  
+</td>
+<td class="right num">847.3K</td>
+<td class="right">1.1K</td>
+<td class="nowrap">2026-06-12T16:15</td>
+<td class="center"><a href="https://www.tiktok.com/@focuk8899/video/7650415445480181014" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">focuk8899</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-04-27T22:35" data-views="355218" data-score="14.8">
+<td class="center">23</td>
+<td class="center"><span class="score lo">15</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729441045404553059/17294410454045530590.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729441045404553059/17294410454045530590.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Straame 3 合 1 吹叶机和真空吸尘器 3500W、花园吸尘器、鼓风机和覆盖机、</div>
+  <div class="item-en">Straame 3-in-1 Leaf Blower and Vacuum 3500W, Garden Vacuum, </div>
+  
+</td>
+<td class="right num">355.2K</td>
+<td class="right">301</td>
+<td class="nowrap">2026-04-27T22:35</td>
+<td class="center"><a href="https://www.tiktok.com/@sam_sweet_brummom/video/7633447627576659203" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">sam_sweet_brummom</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-04T23:16" data-views="315880" data-score="13.9">
+<td class="center">24</td>
+<td class="center"><span class="score lo">14</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729604337528118040/17296043375281180400.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729604337528118040/17296043375281180400.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">VAX SpotWash 有线污点清洁器 - 多表面、易清空水箱、长距离 Ho</div>
+  <div class="item-en">VAX SpotWash Corded Spot Cleaner - Multi-Surface, Easy Empty</div>
+  
+</td>
+<td class="right num">315.9K</td>
+<td class="right">216</td>
+<td class="nowrap">2026-06-04T23:16</td>
+<td class="center"><a href="https://www.tiktok.com/@soldbyseanuk/video/7647559348230622486" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">soldbyseanuk</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-04T15:44" data-views="525746" data-score="13.0">
+<td class="center">25</td>
+<td class="center"><span class="score lo">13</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7658575481503042838.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729713082532076538/17297130825320765380.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">卡尼尔 | Crema 面部冰糕 2x85ml</div>
+  <div class="item-en">GARNIER | Crema facial Sorbete de 2x85ml</div>
+  
+</td>
+<td class="right num">525.7K</td>
+<td class="right">201</td>
+<td class="nowrap">2026-07-04T15:44</td>
+<td class="center"><a href="https://www.tiktok.com/@piibre/video/7658575481503042838" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">piibre</div>
+  <div class="desc">#ad Publi. La Crema Sorbete de @Garnier ES es ultra refresca</div>
+</td>
+</tr>
+<tr data-time="2026-06-05T10:41" data-views="231148" data-score="10.5">
+<td class="center">26</td>
+<td class="center"><span class="score lo">10</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729500790383810636/17295007903838106360.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729500790383810636/17295007903838106360.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">LED 吊扇灯可调光客厅吊灯带遥控器</div>
+  <div class="item-en">LED Ceiling Fan Light Dimmable Living Room Chandelier Lamp W</div>
+  
+</td>
+<td class="right num">231.1K</td>
+<td class="right">289</td>
+<td class="nowrap">2026-06-05T10:41</td>
+<td class="center"><a href="https://www.tiktok.com/@thesaleseeker_/video/7647735639789735191" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">thesaleseeker_</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+</tbody></table></div>
+
+<!-- Tab 1: 新素材 -->
+<div class="tc" id="t1">
+<div class="stats">
+<div class="sc"><div class="lb">新素材数</div><div class="vl">2</div></div>
+<div class="sc"><div class="lb">说明</div><div class="vl" style="font-size:13px">历史从未出现过的视频素材</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索达人、商品..." oninput="ft(this,'tb1')">
+<label><input type="checkbox" checked onchange="f7(this,'tb1')"> 隐藏7天前</label>
+</div>
+<table id="tb1"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr data-time="2026-07-22 16:39" data-views="233112" data-score="25.4">
+<td class="center">1</td>
+<td class="center"><span class="score lo">25</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7665269116806106390.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729874480986691694/17298744809866916940.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">果味泡泡糖套装 | 2KG 泡泡糖精选 N 混合 |什锦水果味泡泡</div>
+  <div class="item-en">Fruity Bubblegum Bundle | 2KG Bubblegum Pick N Mix | Assorte</div>
+  
+</td>
+<td class="right num">233.1K</td>
+<td class="right">1.1K</td>
+<td class="nowrap">2026-07-22 16:39</td>
+<td class="center"><a href="https://www.tiktok.com/@greise_a/video/7665269116806106390?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">greise_a</div>
+  <div class="desc">2KG Fruity Bubblegum!  #bubblegum #watermelonbubblegum #swee</div>
+</td>
+</tr>
+<tr data-time="2026-07-22 03:39" data-views="342461" data-score="19.2">
+<td class="center">2</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7665068072897694998.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729701430364773200/17297014303647732000.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">GLAM GUARD - UNICORN COSMETICS 防水粘合睫毛遮阳板</div>
+  <div class="item-en">GLAM GUARD - WATERPROOF ADHESIVE LASH VISOR BY UNICORN COSME</div>
+  
+</td>
+<td class="right num">342.5K</td>
+<td class="right">1.4K</td>
+<td class="nowrap">2026-07-22 03:39</td>
+<td class="center"><a href="https://www.tiktok.com/@bethcop/video/7665068072897694998?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bethanie💜</div>
+  <div class="desc">#lashextentions #lashgaurd #showerhack #lashtip #trending </div>
+</td>
+</tr>
+</tbody></table></div>
+
+<!-- Tab 2: 高潜商品 -->
+<div class="tc" id="t2">
+<div class="stats">
+<div class="sc"><div class="lb">候选商品数</div><div class="vl">0</div></div>
+<div class="sc"><div class="lb">筛选逻辑</div><div class="vl" style="font-size:13px">近3天视频聚合 | 去除与前两栏重合</div></div>
+<div class="sc"><div class="lb">最高决策分</div><div class="vl">0</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索商品、达人..." oninput="ft(this,'tb2')">
+</div>
+<table id="tb2"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">决策分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">样本视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">视频数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">达人数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="n" style="text-align:right">累计播放 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">样本说明 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr><td colspan="10" class="empty">暂无数据</td></tr>
+</tbody></table></div>
+
+<!-- Tab 3: 商品榜 -->
+<div class="tc" id="t3">
+<div class="stats">
+<div class="sc"><div class="lb">新商品数</div><div class="vl">0</div></div>
+<div class="sc"><div class="lb">说明</div><div class="vl" style="font-size:13px">历史从未出现过的商品</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索商品、店铺..." oninput="ft(this,'tb3')">
+</div>
+<table id="tb3"><thead><tr>
+<th data-c="0" data-t="n" style="width:36px">排名 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:60px">图片</th>
+<th data-c="2" data-t="s">商品名 / 分类 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="3" data-t="n" style="text-align:right">价格 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="4" data-t="n" style="text-align:right">日销量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">总销量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">日GMV <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">店铺 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="8" data-t="n" style="text-align:center">佣金 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr><td colspan="10" class="empty">暂无数据</td></tr>
+</tbody></table></div>
+
+<script>
+function sw(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',j===i))}
+function ft(inp,tid){const q=inp.value.toLowerCase();document.getElementById(tid).querySelectorAll('tbody tr').forEach(r=>{if(!r.classList.contains('h7'))r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'})}
+function f7(cb,tid){const now=Date.now(),lim=7*864e5;document.getElementById(tid).querySelectorAll('tbody tr').forEach(r=>{const t=r.dataset.time;if(!t)return;const d=new Date(t.replace(' ','T'));if(now-d.getTime()>lim){if(cb.checked){r.classList.add('h7','hidden-row')}else{r.classList.remove('h7','hidden-row')}}})}
+function showImg(s){document.getElementById('modalImg').src=s;document.getElementById('modal').classList.add('show')}
+document.querySelectorAll('th[data-c]').forEach(th=>{th.addEventListener('click',function(){const tb=this.closest('table'),tbody=tb.querySelector('tbody'),rows=Array.from(tbody.querySelectorAll('tr')),c=+this.dataset.c,t=this.dataset.t,asc=this.classList.contains('asc');tb.querySelectorAll('th').forEach(h=>h.classList.remove('asc','desc'));this.classList.add(asc?'desc':'asc');const d=asc?-1:1;const pn=s=>{s=s.replace(/[$,%]/g,'').trim();if(s.endsWith('M'))return parseFloat(s)*1e6;if(s.endsWith('K'))return parseFloat(s)*1e3;return parseFloat(s)||0};rows.sort((a,b)=>{const va=a.cells[c]?a.cells[c].textContent.trim():'',vb=b.cells[c]?b.cells[c].textContent.trim():'';return t==='n'?(pn(va)-pn(vb))*d:va.localeCompare(vb)*d});rows.forEach(r=>tbody.appendChild(r))})});
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.toolbar input[type=checkbox]').forEach(cb=>{if(cb.checked){const tid=cb.closest('.tc').querySelector('table').id;f7(cb,tid)}})});
+</script>
+</body>
+</html>
