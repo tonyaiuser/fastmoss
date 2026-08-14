@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巴巴塔自动选品系统 - 英国 - 2026-08-14</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#1f2937;font-size:13px}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px 28px}
+.header h1{font-size:22px;margin-bottom:2px}
+.header .sub{opacity:.85;font-size:13px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e5e7eb;position:sticky;top:0;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.tab{padding:12px 20px;cursor:pointer;font-weight:500;font-size:13px;border-bottom:3px solid transparent;color:#6b7280;white-space:nowrap}
+.tab:hover{color:#4f46e5;background:#f9fafb}
+.tab.active{color:#4f46e5;border-bottom-color:#4f46e5}
+.badge{background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:5px}
+.tc{display:none;padding:16px 24px}
+.tc.active{display:block}
+.stats{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.hero{padding:16px 24px;background:#fff;border-bottom:1px solid #e5e7eb}
+.hero-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.panel{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.diag{padding:8px 10px;border-radius:8px;margin-bottom:8px;font-size:12px}
+.diag.info{background:#eff6ff;color:#1d4ed8}
+.diag.warning{background:#fff7ed;color:#c2410c}
+.diag.error{background:#fef2f2;color:#dc2626}
+.sc{background:#fff;border-radius:10px;padding:12px 16px;flex:1;min-width:130px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sc .lb{color:#6b7280;font-size:11px;margin-bottom:2px}
+.sc .vl{font-size:22px;font-weight:700}
+.toolbar{margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar input[type=text]{padding:7px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:280px;outline:none}
+.toolbar input[type=text]:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.toolbar label{font-size:12px;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:4px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);table-layout:auto}
+th{background:#f9fafb;padding:8px 10px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:600;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{background:#eef2ff;color:#4f46e5}
+th .si{margin-left:3px;opacity:.3;font-size:9px}
+th.asc .si,th.desc .si{opacity:1;color:#4f46e5}
+td{padding:8px 10px;border-top:1px solid #f3f4f6;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.center{text-align:center}
+.right{text-align:right}
+.nowrap{white-space:nowrap}
+.num{font-weight:600;color:#ef4444}
+.empty{text-align:center;padding:40px;color:#9ca3af}
+.score{display:inline-block;font-weight:700;font-size:18px;min-width:32px;text-align:center}
+.hi{color:#10b981}.mid{color:#f59e0b}.lo{color:#6b7280}
+.tag-burst{display:inline-block;background:#fee2e2;color:#dc2626;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}
+.tag-engage{display:inline-block;background:#dbeafe;color:#2563eb;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:600;margin-top:2px}
+.thumb{object-fit:cover;border-radius:6px;cursor:pointer;display:block}
+.img-placeholder{background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:10px}
+.cell-main{max-width:220px}
+.creator{font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.desc{color:#6b7280;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;margin-top:1px}
+.cell-item{max-width:240px}
+.item-cn{font-weight:500;font-size:12px;color:#1e40af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.item-en{font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;margin-top:1px}
+.cat{font-size:10px;color:#6b7280;margin-top:1px}
+.tag{display:inline-block;background:#f3f4f6;color:#6b7280;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px}
+a{color:#3b82f6;text-decoration:none;font-size:12px}
+a:hover{text-decoration:underline}
+.fresh{color:#10b981;font-weight:600}
+.hidden-row{display:none!important}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:9999;cursor:pointer;justify-content:center;align-items:center}
+.modal.show{display:flex}
+.modal img{max-width:90vw;max-height:90vh;border-radius:8px}
+@media(max-width:768px){
+.header{padding:14px 16px}
+.header h1{font-size:18px}
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:10px 12px;font-size:12px}
+.tc{padding:10px 12px}
+.stats{gap:8px}
+.sc{padding:10px 12px;min-width:80px}
+.sc .vl{font-size:18px}
+.toolbar{flex-direction:column;align-items:stretch}
+.toolbar input[type=text]{width:100%}
+table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+thead{display:table;width:100%;table-layout:auto}
+tbody{display:table;width:100%;table-layout:auto}
+td,th{padding:6px 6px;font-size:11px}
+.thumb{width:36px!important;height:36px!important}
+.img-placeholder{width:36px!important;height:36px!important}
+.cell-main{max-width:120px}
+.creator{font-size:11px;max-width:110px}
+.desc{display:none}
+.cell-item{max-width:140px}
+.item-cn{font-size:11px;max-width:130px}
+.item-en{display:none}
+.score{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>巴巴塔自动选品系统</h1>
+<div class="sub">数据日期: 2026-08-14 | 生成: 08:40:36 | 地区: 英国 (GB)</div>
+</div>
+<div class="hero">
+  <div class="hero-grid">
+    <div class="panel">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;">今日决策视图</div>
+      <div style="color:#6b7280;line-height:1.8;">A 看高分爆热视频, B 看首次出现的新素材, C 看多视频聚合后的高潜商品, D 看商品榜新增商品。</div>
+    </div>
+  </div>
+</div>
+<div class="tabs">
+<div class="tab active" onclick="sw(0)">爆热视频 <span class="badge">114</span></div>
+<div class="tab" onclick="sw(1)">新素材榜 <span class="badge">6</span></div>
+<div class="tab" onclick="sw(2)">高潜商品 <span class="badge">1</span></div>
+<div class="tab" onclick="sw(3)">商品榜新品 <span class="badge">0</span></div>
+</div>
+<div class="modal" id="modal" onclick="this.classList.remove('show')"><img id="modalImg"></div>
+
+<!-- Tab 0: 视频榜 -->
+<div class="tc active" id="t0">
+<div class="stats">
+<div class="sc"><div class="lb">总视频数</div><div class="vl">114</div></div>
+<div class="sc"><div class="lb">最高播放</div><div class="vl">7.7M</div></div>
+<div class="sc"><div class="lb">平均播放</div><div class="vl">819.0K</div></div>
+<div class="sc"><div class="lb">最高评分</div><div class="vl">57</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索达人、商品..." oninput="ft(this,'tb0')">
+<label><input type="checkbox" checked onchange="f7(this,'tb0')"> 隐藏7天前</label>
+</div>
+<table id="tb0"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr data-time="2026-08-12T00:34" data-views="1247637" data-score="57.2">
+<td class="center">1</td>
+<td class="center"><span class="score mid">57</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672813331115265283.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729786863015074312/17297868630150743120.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[Heatwave Essential] Redhut 2026 台扇带 LED 显示 USB 供电便携式</div>
+  <div class="item-en">[Heatwave Essential] Redhut 2026 Desk Fan with LED Display U</div>
+  
+</td>
+<td class="right num">1.2M</td>
+<td class="right">40.5K</td>
+<td class="nowrap">2026-08-12T00:34</td>
+<td class="center"><a href="https://www.tiktok.com/@shopwithellen/video/7672813331115265283" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shopwithellen</div>
+  <div class="desc">Heatwave is HERE and this fan saved my life🥵🔥🔥I’m back with </div>
+</td>
+</tr>
+<tr data-time="2026-08-11T23:53" data-views="490417" data-score="52.0">
+<td class="center">2</td>
+<td class="center"><span class="score mid">52</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672802871703899414.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729783458002409855/17297834580024098550.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">FYNE“完美饰面”神秘套装</div>
+  <div class="item-en">FYNE 'Flawless Finish' Mystery Bundles</div>
+  
+</td>
+<td class="right num">490.4K</td>
+<td class="right">56.4K</td>
+<td class="nowrap">2026-08-11T23:53</td>
+<td class="center"><a href="https://www.tiktok.com/@yourinspogalll/video/7672802871703899414" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">yourinspogalll</div>
+  <div class="desc">#fypxyzbca </div>
+</td>
+</tr>
+<tr data-time="2026-08-11T00:06" data-views="831645" data-score="47.8">
+<td class="center">3</td>
+<td class="center"><span class="score mid">48</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672434945125584150.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729627306029062233/17296273060290622330.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">EVELLYHOOTD Furmel - 秋冬保暖毛绒蓬松女式男式轻质运动鞋</div>
+  <div class="item-en">EVELLYHOOTD Furmel - Autumn Winter Warm Plush Fluffy Sneaker</div>
+  
+</td>
+<td class="right num">831.6K</td>
+<td class="right">26.6K</td>
+<td class="nowrap">2026-08-11T00:06</td>
+<td class="center"><a href="https://www.tiktok.com/@tiktokshopfindsm/video/7672434945125584150" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">tiktokshopfindsm</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T01:11" data-views="3973018" data-score="47.5">
+<td class="center">4</td>
+<td class="center"><span class="score mid">48</span> <span class="tag-burst">爆发中</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671709732322741537.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729502316965698253/17295023169656982530.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Nanolash 睫毛精华液 3ml - 睫毛调理剂</div>
+  <div class="item-en">Nanolash Eyelash Serum 3ml - conditioner for eyelash</div>
+  
+</td>
+<td class="right num">4.0M</td>
+<td class="right">37.6K</td>
+<td class="nowrap">2026-08-09T01:11</td>
+<td class="center"><a href="https://www.tiktok.com/@frontebrowsmanchester/video/7671709732322741537" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">frontebrowsmanchester</div>
+  <div class="desc">Replying to @_a1me33 </div>
+</td>
+</tr>
+<tr data-time="2026-08-10T11:25" data-views="594788" data-score="45.5">
+<td class="center">5</td>
+<td class="center"><span class="score mid">46</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672238832422489374.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729574052793916290/17295740527939162900.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Avidlove 甜美蕾丝吊带背心，适用于女式内衣、睡衣、性感 sl</div>
+  <div class="item-en">Avidlove Sweetness lace camisole for   Womenswear   lingerie</div>
+  
+</td>
+<td class="right num">594.8K</td>
+<td class="right">28.5K</td>
+<td class="nowrap">2026-08-10T11:25</td>
+<td class="center"><a href="https://www.tiktok.com/@aimsxelie/video/7672238832422489374" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">aimsxelie</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T06:50" data-views="262786" data-score="42.4">
+<td class="center">6</td>
+<td class="center"><span class="score mid">42</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672538899029249294.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729574052793916290/17295740527939162900.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Avidlove 甜美蕾丝吊带背心，适用于女式内衣、睡衣、性感 sl</div>
+  <div class="item-en">Avidlove Sweetness lace camisole for   Womenswear   lingerie</div>
+  
+</td>
+<td class="right num">262.8K</td>
+<td class="right">14.6K</td>
+<td class="nowrap">2026-08-11T06:50</td>
+<td class="center"><a href="https://www.tiktok.com/@aimsxelie/video/7672538899029249294" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">aimsxelie</div>
+  <div class="desc">sleep cute af</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T05:18" data-views="2925148" data-score="42.0">
+<td class="center">7</td>
+<td class="center"><span class="score mid">42</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671402003783847182.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729601291831253492/17296012918312534920.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【medicube官方店】零毛孔黑头泥面膜| 3 分钟泥面膜 |  孔隙c</div>
+  <div class="item-en">[medicube Official Shop] Zero Pore Blackhead Mud Mask | 3 mi</div>
+  
+</td>
+<td class="right num">2.9M</td>
+<td class="right">19.1K</td>
+<td class="nowrap">2026-08-08T05:18</td>
+<td class="center"><a href="https://www.tiktok.com/@anna873055/video/7671402003783847182" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">anna873055</div>
+  <div class="desc">Wait for the results….🫣</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T16:13" data-views="602510" data-score="41.2">
+<td class="center">8</td>
+<td class="center"><span class="score mid">41</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672684251703151894.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729408366499172269/17294083664991722690.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[ ELLIE YOUNG 轻松按压，短指甲系列 ] 24 件按压指甲套装，Sh</div>
+  <div class="item-en">[ ELLIE YOUNG Easy Press, Short Nails Collection ]  24pcs Pr</div>
+  
+</td>
+<td class="right num">602.5K</td>
+<td class="right">5.2K</td>
+<td class="nowrap">2026-08-11T16:13</td>
+<td class="center"><a href="https://www.tiktok.com/@emmatwinmum/video/7672684251703151894" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">emmatwinmum</div>
+  <div class="desc">Long wear press on nails by @Ellie Young Nails Ltd I have ha</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T03:06" data-views="288734" data-score="39.9">
+<td class="center">9</td>
+<td class="center"><span class="score lo">40</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672481316868197654.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729839511306869603/17298395113068696030.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式 2 件套，纯色 T 恤和高腰七分裤，舒适</div>
+  <div class="item-en">Women's 2-Piece Set, Plain Color T-Shirt and High-Waist Capr</div>
+  
+</td>
+<td class="right num">288.7K</td>
+<td class="right">13.9K</td>
+<td class="nowrap">2026-08-11T03:06</td>
+<td class="center"><a href="https://www.tiktok.com/@graciepearlx/video/7672481316868197654" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">graciepearlx</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T21:24" data-views="1452744" data-score="39.5">
+<td class="center">10</td>
+<td class="center"><span class="score lo">40</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672393250119879968.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729661856760502764/17296618567605027640.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">6/4 件收腹女式字母网眼中腰，舒适日常穿着内裤</div>
+  <div class="item-en">6/4 PCS Tummy control Women's Letter Mesh mid Waist,Comfy Kn</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">2.1K</td>
+<td class="nowrap">2026-08-10T21:24</td>
+<td class="center"><a href="https://www.tiktok.com/@quietlake610/video/7672393250119879968" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">quietlake610</div>
+  <div class="desc">Girls, if you have that stubborn lower belly pooch... this s</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T20:26" data-views="306926" data-score="38.9">
+<td class="center">11</td>
+<td class="center"><span class="score lo">39</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672749533029240086.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729621188567472864/17296211885674728640.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">P.Louise 痴迷于更少的护肤套装</div>
+  <div class="item-en">P.Louise Obsessed For Less Skincare Set</div>
+  
+</td>
+<td class="right num">306.9K</td>
+<td class="right">3.7K</td>
+<td class="nowrap">2026-08-11T20:26</td>
+<td class="center"><a href="https://www.tiktok.com/@ashjazmyn/video/7672749533029240086" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ashjazmyn</div>
+  <div class="desc">#dealdrops #plouise </div>
+</td>
+</tr>
+<tr data-time="2026-08-10T22:02" data-views="431046" data-score="38.6">
+<td class="center">12</td>
+<td class="center"><span class="score lo">39</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672403187403492630.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729519908892809406/17295199088928094060.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">迷迭香和米水头发生长喷雾护发</div>
+  <div class="item-en">Rosemary & Ricewater Hair Growth Spray Haircare</div>
+  
+</td>
+<td class="right num">431.0K</td>
+<td class="right">7.2K</td>
+<td class="nowrap">2026-08-10T22:02</td>
+<td class="center"><a href="https://www.tiktok.com/@bestbuysbyshini/video/7672403187403492630" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bestbuysbyshini</div>
+  <div class="desc">holy glow uppp #hairgrowth #hairhack #hairtransformation #tt</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T20:08" data-views="494225" data-score="38.3">
+<td class="center">13</td>
+<td class="center"><span class="score lo">38</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672744830560242966.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729475641357867023/17294756413578670230.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">豪华床垫套 4 英寸 10 厘米超厚酒店品质床垫套</div>
+  <div class="item-en">Luxury Mattress Topper 4-Inches 10CM Extra Thick Hotel Quali</div>
+  
+</td>
+<td class="right num">494.2K</td>
+<td class="right">2.5K</td>
+<td class="nowrap">2026-08-11T20:08</td>
+<td class="center"><a href="https://www.tiktok.com/@adoremumfinds/video/7672744830560242966" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">adoremumfinds</div>
+  <div class="desc">#mattresstopper #cosyvibes #comfybed #tiktokmademebuyit </div>
+</td>
+</tr>
+<tr data-time="2026-08-10T23:20" data-views="233789" data-score="36.6">
+<td class="center">14</td>
+<td class="center"><span class="score lo">37</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672423107809889558.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729410777596988752/17294107775969887520.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Etekcity 体重秤，高精度 0.1 磅浴室数字称重</div>
+  <div class="item-en">Etekcity Scales for Body Weight, High Precision 0.1lb Bathro</div>
+  
+</td>
+<td class="right num">233.8K</td>
+<td class="right">5.5K</td>
+<td class="nowrap">2026-08-10T23:20</td>
+<td class="center"><a href="https://www.tiktok.com/@roseamyg3/video/7672423107809889558" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">roseamyg3</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-25T16:06" data-views="3976404" data-score="36.4">
+<td class="center">15</td>
+<td class="center"><span class="score lo">36</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666118841142955286.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729703073618893822/17297030736188938220.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">新品 The Ordinary - 卷翘睫毛膏</div>
+  <div class="item-en">New The Ordinary - Lash Curl Finisher</div>
+  
+</td>
+<td class="right num">4.0M</td>
+<td class="right">20.3K</td>
+<td class="nowrap">2026-07-25T16:06</td>
+<td class="center"><a href="https://www.tiktok.com/@diaryoffrancine/video/7666118841142955286" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">diaryoffrancine</div>
+  <div class="desc">simply curl your lashes as normal & apply a layer of lash cu</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T02:38" data-views="1352142" data-score="35.5">
+<td class="center">16</td>
+<td class="center"><span class="score lo">36</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671731984812625174.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729783458002409855/17297834580024098550.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">FYNE“完美饰面”神秘套装</div>
+  <div class="item-en">FYNE 'Flawless Finish' Mystery Bundles</div>
+  
+</td>
+<td class="right num">1.4M</td>
+<td class="right">5.9K</td>
+<td class="nowrap">2026-08-09T02:38</td>
+<td class="center"><a href="https://www.tiktok.com/@georgina_brights/video/7671731984812625174" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">georgina_brights</div>
+  <div class="desc">Omg #makeupbox </div>
+</td>
+</tr>
+<tr data-time="2026-08-10T23:39" data-views="289728" data-score="35.5">
+<td class="center">17</td>
+<td class="center"><span class="score lo">36</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672428030278651168.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729764054252231631/17297640542522316310.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Urban Nest 90/150/180cm皇冠形荷叶边靠背枕头公主卧室他</div>
+  <div class="item-en">Urban Nest 90/150/180cm Crown-shaped Ruffled Backrest Pillow</div>
+  
+</td>
+<td class="right num">289.7K</td>
+<td class="right">12.7K</td>
+<td class="nowrap">2026-08-10T23:39</td>
+<td class="center"><a href="https://www.tiktok.com/@its_lexymaee/video/7672428030278651168" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">its_lexymaee</div>
+  <div class="desc">I tried to be a beige girl but I can’t do it I love colour 🩷</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T23:27" data-views="310068" data-score="35.0">
+<td class="center">18</td>
+<td class="center"><span class="score lo">35</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671682780190919958.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729430683397491795/17294306833974917950.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">TOPDON CarPal OBD2 扫描仪、蓝牙汽车诊断工具、汽车代码扫描仪</div>
+  <div class="item-en">TOPDON CarPal OBD2 Scanner, Bluetooth Car Diagnostic Tool, C</div>
+  
+</td>
+<td class="right num">310.1K</td>
+<td class="right">9.0K</td>
+<td class="nowrap">2026-08-08T23:27</td>
+<td class="center"><a href="https://www.tiktok.com/@dads_dailydeals/video/7671682780190919958" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">dads_dailydeals</div>
+  <div class="desc">#carmaintenance #carrepairs #dpf </div>
+</td>
+</tr>
+<tr data-time="2026-06-24T11:13" data-views="7749917" data-score="34.5">
+<td class="center">19</td>
+<td class="center"><span class="score lo">34</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7654794852940401951.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729776209969846450/17297762099698464500.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[限量+赠品][Dr.Melaxin 官方] 7 步焕采护理套装 |乙</div>
+  <div class="item-en">[LIMITED STOCK + FREE GIFT][Dr.Melaxin Official] 7-Step Radi</div>
+  
+</td>
+<td class="right num">7.7M</td>
+<td class="right">16.5K</td>
+<td class="nowrap">2026-06-24T11:13</td>
+<td class="center"><a href="https://www.tiktok.com/@cakedfinds/video/7654794852940401951" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">cakedfinds</div>
+  <div class="desc">It’s on such a good deal today 😳 #tiktokshopcreatorpicks </div>
+</td>
+</tr>
+<tr data-time="2026-08-07T15:07" data-views="2988684" data-score="34.3">
+<td class="center">20</td>
+<td class="center"><span class="score lo">34</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671182753261489430.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729782734077532681/17297827340775326810.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">带星光的可伸缩车载充电器，车顶 66W 星光 4 合 1 伸缩</div>
+  <div class="item-en">Retractable Car Charger with Starlight, 66W Starlight in Car</div>
+  
+</td>
+<td class="right num">3.0M</td>
+<td class="right">2.5K</td>
+<td class="nowrap">2026-08-07T15:07</td>
+<td class="center"><a href="https://www.tiktok.com/@autohome622/video/7671182753261489430" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">autohome622</div>
+  <div class="desc">Instantly Upgrad Your Interior With Affordable Upgrades #car</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T00:07" data-views="318308" data-score="34.2">
+<td class="center">21</td>
+<td class="center"><span class="score lo">34</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672064251246300438.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729572312673393551/17295723126733935510.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">高腰柔软舒适阔腿休闲女裤，百搭运动针织</div>
+  <div class="item-en">High Waist Soft Comfortable Wide Leg Casual Women Pants, Ver</div>
+  
+</td>
+<td class="right num">318.3K</td>
+<td class="right">5.5K</td>
+<td class="nowrap">2026-08-10T00:07</td>
+<td class="center"><a href="https://www.tiktok.com/@izzysfindsx/video/7672064251246300438" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">izzysfindsx</div>
+  <div class="desc">my everyday autumn wardrobe🍂#spotlightfashion #autumnstyle #</div>
+</td>
+</tr>
+<tr data-time="2026-05-18T01:56" data-views="737132" data-score="32.9">
+<td class="center">22</td>
+<td class="center"><span class="score lo">33</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7640921004335893783.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729402710285192680/17294027102851926800.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">睫毛生长精华液</div>
+  <div class="item-en">Lash Growth Serum</div>
+  
+</td>
+<td class="right num">737.1K</td>
+<td class="right">30.3K</td>
+<td class="nowrap">2026-05-18T01:56</td>
+<td class="center"><a href="https://www.tiktok.com/@bybabesbeauty/video/7640921004335893783" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bybabesbeauty</div>
+  <div class="desc">There’s always a silver lining or whatever the saying is xx</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T04:18" data-views="222724" data-score="32.8">
+<td class="center">23</td>
+<td class="center"><span class="score lo">33</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672499985686088982.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729427688251952801/17294276882519528010.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">GOOGOO 人发自然直发接发胶带</div>
+  <div class="item-en">GOOGOO Hair Extensions Tape in Human Hair Natural Straight</div>
+  
+</td>
+<td class="right num">222.7K</td>
+<td class="right">2.6K</td>
+<td class="nowrap">2026-08-11T04:18</td>
+<td class="center"><a href="https://www.tiktok.com/@ab51gar/video/7672499985686088982" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ab51gar</div>
+  <div class="desc">Mine are 100g per pack and I went for 24inch ! #fypp #viral </div>
+</td>
+</tr>
+<tr data-time="2026-07-12T15:44" data-views="1234470" data-score="32.5">
+<td class="center">24</td>
+<td class="center"><span class="score lo">32</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7661544020060966166.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729498270669380392/17294982706693803920.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">DOEAST 英国卖家吹风机 5 合 1 发型师套装 百万级负离子</div>
+  <div class="item-en">DOEAST UK Seller Hair Dryer 5 in 1 Hair Styler Set With Mill</div>
+  
+</td>
+<td class="right num">1.2M</td>
+<td class="right">24.9K</td>
+<td class="nowrap">2026-07-12T15:44</td>
+<td class="center"><a href="https://www.tiktok.com/@liv.liv531/video/7661544020060966166" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">liv.liv531</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-07-28T18:26" data-views="316137" data-score="32.5">
+<td class="center">25</td>
+<td class="center"><span class="score lo">32</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7667523223990340886.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729788348668287055/17297883486682870550.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Caramela Beauty 香附油自然脱发 - 60ml/2oz</div>
+  <div class="item-en">Caramela Beauty Cyperus Rotundus Oil for Natural Hair Reduct</div>
+  
+</td>
+<td class="right num">316.1K</td>
+<td class="right">16.5K</td>
+<td class="nowrap">2026-07-28T18:26</td>
+<td class="center"><a href="https://www.tiktok.com/@bestbuysbyshini/video/7667523223990340886" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bestbuysbyshini</div>
+  <div class="desc">where was this 10 years ago… #hairremoval #cyperusrotundusoi</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T23:48" data-views="215293" data-score="32.3">
+<td class="center">26</td>
+<td class="center"><span class="score lo">32</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672801390888078614.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729568200606386332/17295682006063863320.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">牙齿美白贴，14/28 天治疗，不含过氧化物，无敏感性，素食</div>
+  <div class="item-en">Teeth Whitening Strips, 14/28 Day Treatment, Non Peroxide, S</div>
+  
+</td>
+<td class="right num">215.3K</td>
+<td class="right">1.0K</td>
+<td class="nowrap">2026-08-11T23:48</td>
+<td class="center"><a href="https://www.tiktok.com/@sophienotjacob/video/7672801390888078614" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">sophienotjacob</div>
+  <div class="desc">Replying to @cookiecookerson123 UNDER £10!! </div>
+</td>
+</tr>
+<tr data-time="2026-08-11T19:59" data-views="366624" data-score="32.1">
+<td class="center">27</td>
+<td class="center"><span class="score lo">32</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672742508316626209.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729402922414870056/17294029224148700560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">便携式折叠木炭烧烤烧烤野营烧烤架旅行野餐户外金属</div>
+  <div class="item-en">Portable Folding Charcoal BBQ Barbecue Camping Grill Travel </div>
+  
+</td>
+<td class="right num">366.6K</td>
+<td class="right">304</td>
+<td class="nowrap">2026-08-11T19:59</td>
+<td class="center"><a href="https://www.tiktok.com/@save_lots_of_money/video/7672742508316626209" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">save_lots_of_money</div>
+  <div class="desc">Disposable barbecues are a thing of the past! Re-use this ti</div>
+</td>
+</tr>
+<tr data-time="2026-08-05T18:31" data-views="1655603" data-score="31.9">
+<td class="center">28</td>
+<td class="center"><span class="score lo">32</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670486177652280598.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729827987329554628/17298279873295546280.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">2026 时尚简约优雅女式触摸屏斜挎手机钱包 - 多款</div>
+  <div class="item-en">2026 Trendy Minimalist Elegant Women's Touchscreen Crossbody</div>
+  
+</td>
+<td class="right num">1.7M</td>
+<td class="right">2.5K</td>
+<td class="nowrap">2026-08-05T18:31</td>
+<td class="center"><a href="https://www.tiktok.com/@washingmachine36/video/7670486177652280598" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">washingmachine36</div>
+  <div class="desc">How cool is this touch screencrossbody purse?! So convenient</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T23:21" data-views="502175" data-score="31.8">
+<td class="center">29</td>
+<td class="center"><span class="score lo">32</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672423290270469398.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729637327938624114/17296373279386241140.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">VUB AI 智能眼镜，带蓝牙、自动调色镜片、内置扬声器和麦克风</div>
+  <div class="item-en">VUB AI Smart Glasses with Bluetooth, Auto-Tinting Lenses, Bu</div>
+  
+</td>
+<td class="right num">502.2K</td>
+<td class="right">1.0K</td>
+<td class="nowrap">2026-08-10T23:21</td>
+<td class="center"><a href="https://www.tiktok.com/@zachshops/video/7672423290270469398" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">zachshops</div>
+  <div class="desc">In shock #smartglasses #glasses #sunglasses </div>
+</td>
+</tr>
+<tr data-time="2026-08-12T04:30" data-views="241397" data-score="30.8">
+<td class="center">30</td>
+<td class="center"><span class="score lo">31</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672874254240664835.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729749973828672458/17297499738286724580.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">维多利亚的秘密午夜绽放身体喷雾 250ml</div>
+  <div class="item-en">Victoria´s Secret Midnight Bloom 250ml Body Mist</div>
+  
+</td>
+<td class="right num">241.4K</td>
+<td class="right">749</td>
+<td class="nowrap">2026-08-12T04:30</td>
+<td class="center"><a href="https://www.tiktok.com/@mumshomeandmore/video/7672874254240664835" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">mumshomeandmore</div>
+  <div class="desc">Saved £56 at checkout 🎉😍 was no expecting that one, AMAZING!</div>
+</td>
+</tr>
+<tr data-time="2026-07-15T17:00" data-views="2351019" data-score="30.6">
+<td class="center">31</td>
+<td class="center"><span class="score lo">31</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7662645855924522262.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729399889638952121/17293998896389521210.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【End of Summer Drop】男女沙龙式脱毛套装 – Easy At-Home Hair R</div>
+  <div class="item-en">【End of Summer Drop】Salon-Style Waxing Kit for Women & Men –</div>
+  
+</td>
+<td class="right num">2.4M</td>
+<td class="right">13.8K</td>
+<td class="nowrap">2026-07-15T17:00</td>
+<td class="center"><a href="https://www.tiktok.com/@sj.unfiltered/video/7662645855924522262" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">sj.unfiltered</div>
+  <div class="desc">Women don’t want results that last for days, they want smoot</div>
+</td>
+</tr>
+<tr data-time="2026-07-07T19:37" data-views="1203785" data-score="30.6">
+<td class="center">32</td>
+<td class="center"><span class="score lo">31</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7659748805885070614.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729399850821520841/17293998508215208410.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Livingandhome 7L/9L 带盖悬挂式厨房垃圾桶 – 无异味，节省空间 Rubbis</div>
+  <div class="item-en">Livingandhome 7L/9L Hanging Kitchen Bin with Lid – No Smell,</div>
+  
+</td>
+<td class="right num">1.2M</td>
+<td class="right">20.0K</td>
+<td class="nowrap">2026-07-07T19:37</td>
+<td class="center"><a href="https://www.tiktok.com/@dellanoyce/video/7659748805885070614" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">dellanoyce</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T11:50" data-views="531561" data-score="30.5">
+<td class="center">33</td>
+<td class="center"><span class="score lo">30</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672245350211521814.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729790359413300156/17297903594133001560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">儿童百科全书|必备的课外读物</div>
+  <div class="item-en">Children's  Encyclopedia | Must-Have Extracurricular Reading</div>
+  
+</td>
+<td class="right num">531.6K</td>
+<td class="right">2.2K</td>
+<td class="nowrap">2026-08-10T11:50</td>
+<td class="center"><a href="https://www.tiktok.com/@booked.change/video/7672245350211521814" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">booked.change</div>
+  <div class="desc">#book#tiktokshop#tiktokshop#childrensbook #100000ways </div>
+</td>
+</tr>
+<tr data-time="2026-08-10T21:38" data-views="302156" data-score="30.3">
+<td class="center">34</td>
+<td class="center"><span class="score lo">30</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672396844785241366.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729741294605867303/17297412946058673030.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【英国卖家】一体化便携式摇篮和摇篮秋千，带舒缓摇摆 M</div>
+  <div class="item-en">【UK SELLER】All-in-One Portable Bassinet and cradle swing wit</div>
+  
+</td>
+<td class="right num">302.2K</td>
+<td class="right">5.8K</td>
+<td class="nowrap">2026-08-10T21:38</td>
+<td class="center"><a href="https://www.tiktok.com/@isabellagipps/video/7672396844785241366" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">isabellagipps</div>
+  <div class="desc">An absolute must have!</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T00:05" data-views="662221" data-score="29.8">
+<td class="center">35</td>
+<td class="center"><span class="score lo">30</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671321531338853654.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729789288748129020/17297892887481290200.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Stanley IceFlow 翻转吸管 2.0 1.06L 水瓶</div>
+  <div class="item-en">Stanley IceFlow Flip Straw 2.0 1.06L Water Bottle</div>
+  
+</td>
+<td class="right num">662.2K</td>
+<td class="right">15.4K</td>
+<td class="nowrap">2026-08-08T00:05</td>
+<td class="center"><a href="https://www.tiktok.com/@sophaspinmusicx/video/7671321531338853654" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">sophaspinmusicx</div>
+  <div class="desc">Fell for the trend...</div>
+</td>
+</tr>
+<tr data-time="2026-07-16T05:34" data-views="683057" data-score="29.3">
+<td class="center">36</td>
+<td class="center"><span class="score lo">29</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7662871301891181837.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729636667490081131/17296366674900811310.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">BellaVita Luxury 蜂蜜乌木 x 2 |淡香精 |广藿香、香草、佛手柑</div>
+  <div class="item-en">BellaVita Luxury's Honey Oud x 2 | Eau de Parfum | Patchouli</div>
+  
+</td>
+<td class="right num">683.1K</td>
+<td class="right">20.1K</td>
+<td class="nowrap">2026-07-16T05:34</td>
+<td class="center"><a href="https://www.tiktok.com/@1ihanaaa/video/7662871301891181837" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">1ihanaaa</div>
+  <div class="desc">For my vanilla girlies #fypシ #viral #famous #GlowUp #perfume</div>
+</td>
+</tr>
+<tr data-time="2026-08-07T15:05" data-views="341976" data-score="29.2">
+<td class="center">37</td>
+<td class="center"><span class="score lo">29</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671182242852506903.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729782374987963390/17297823749879633900.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">The Ordinary - 日常保湿玻璃瓶 500ml</div>
+  <div class="item-en">The Ordinary - Daily Hydration Glass Bottle 500ml</div>
+  
+</td>
+<td class="right num">342.0K</td>
+<td class="right">5.0K</td>
+<td class="nowrap">2026-08-07T15:05</td>
+<td class="center"><a href="https://www.tiktok.com/@chloejoshtts/video/7671182242852506903" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">chloejoshtts</div>
+  <div class="desc">The most aesthetic water bottle! @The Ordinary Store UK #tik</div>
+</td>
+</tr>
+<tr data-time="2026-07-15T15:20" data-views="416805" data-score="29.2">
+<td class="center">38</td>
+<td class="center"><span class="score lo">29</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7662651138432339213.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729629555956751032/17296295559567510320.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">男女通用简约风格纯色骷髅帽，3 件装休闲运动透气白色</div>
+  <div class="item-en">Unisex Simple Style Plain Color Skull Caps, 3pcs Casual Spor</div>
+  
+</td>
+<td class="right num">416.8K</td>
+<td class="right">48.6K</td>
+<td class="nowrap">2026-07-15T15:20</td>
+<td class="center"><a href="https://www.tiktok.com/@grvmnd/video/7662651138432339213" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">grvmnd</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-06-03T21:27" data-views="367018" data-score="28.8">
+<td class="center">39</td>
+<td class="center"><span class="score lo">29</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7647160133734108438.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729427304749436081/17294273047494360810.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Chamoy 泡菜套件 |选择你的口味 |范霍尔滕泡菜</div>
+  <div class="item-en">Chamoy Pickle Kit | Choose your flavour | Van Holten’s Pickl</div>
+  
+</td>
+<td class="right num">367.0K</td>
+<td class="right">8.9K</td>
+<td class="nowrap">2026-06-03T21:27</td>
+<td class="center"><a href="https://www.tiktok.com/@aimeelchandler2/video/7647160133734108438" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">aimeelchandler2</div>
+  <div class="desc">I can confirm they are real pickles and not just a sweet 😅🤢🤢</div>
+</td>
+</tr>
+<tr data-time="2026-08-07T04:15" data-views="692689" data-score="28.7">
+<td class="center">40</td>
+<td class="center"><span class="score lo">29</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671014843490553101.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729406308479110481/17294063084791104810.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">肺部呼吸锻炼工具，便携式可调阻力肺锻炼器</div>
+  <div class="item-en">Breathing Exercise Tool for Lungs, Portable Adjustable Resis</div>
+  
+</td>
+<td class="right num">692.7K</td>
+<td class="right">3.8K</td>
+<td class="nowrap">2026-08-07T04:15</td>
+<td class="center"><a href="https://www.tiktok.com/@shopdealsbyhegs/video/7671014843490553101" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shopdealsbyhegs</div>
+  <div class="desc">Chat code for endurance. </div>
+</td>
+</tr>
+<tr data-time="2026-06-13T23:12" data-views="874244" data-score="28.6">
+<td class="center">41</td>
+<td class="center"><span class="score lo">29</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7650898114462764310.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729621188567472864/17296211885674728640.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">P.Louise 痴迷于更少的护肤套装</div>
+  <div class="item-en">P.Louise Obsessed For Less Skincare Set</div>
+  
+</td>
+<td class="right num">874.2K</td>
+<td class="right">16.2K</td>
+<td class="nowrap">2026-06-13T23:12</td>
+<td class="center"><a href="https://www.tiktok.com/@annabelkershaw/video/7650898114462764310" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">annabelkershaw</div>
+  <div class="desc">He should’ve got 3 !! @PLOUISE #plouise #plouiseskincare #sk</div>
+</td>
+</tr>
+<tr data-time="2026-05-16T17:41" data-views="4937214" data-score="28.5">
+<td class="center">42</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7640422548710100246.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729611258860706645/17296112588607066450.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">2.4GHz WiFi安全摄像头，2路通话，安全摄像头，婴儿摄像头，wifi摄像头，</div>
+  <div class="item-en">2.4GHz WiFi security camera,2-way call,security cameras,baby</div>
+  
+</td>
+<td class="right num">4.9M</td>
+<td class="right">12.4K</td>
+<td class="nowrap">2026-05-16T17:41</td>
+<td class="center"><a href="https://www.tiktok.com/@jooancamera0/video/7640422548710100246" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">jooancamera0</div>
+  <div class="desc">JOOAN's latest mini window security camera, featuring high-d</div>
+</td>
+</tr>
+<tr data-time="2026-08-07T20:34" data-views="476910" data-score="28.4">
+<td class="center">43</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671267053692521741.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729862020444821842/17298620204448218420.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">100% 棉短袖印花有趣的“未诊断但有些不对劲”嗡嗡声</div>
+  <div class="item-en">100% Cotton Short Sleeve Print Funny 'Undiagnosed But Someth</div>
+  
+</td>
+<td class="right num">476.9K</td>
+<td class="right">5.1K</td>
+<td class="nowrap">2026-08-07T20:34</td>
+<td class="center"><a href="https://www.tiktok.com/@slatersdeals/video/7671267053692521741" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">slatersdeals</div>
+  <div class="desc">I got 2 of them😭 #funny #tshirt #tiktokmademebuyit #funnyshi</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T23:20" data-views="392865" data-score="28.4">
+<td class="center">44</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672423037723004182.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729593908697733576/17295939086977335760.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【SUMMER SKIN READY】全套男女脱毛套装，蜡锅加热器，带 5 瓦</div>
+  <div class="item-en">【SUMMER SKIN READY】Complete Waxing Kit for Women & Men, Wax </div>
+  
+</td>
+<td class="right num">392.9K</td>
+<td class="right">589</td>
+<td class="nowrap">2026-08-10T23:20</td>
+<td class="center"><a href="https://www.tiktok.com/@maya.don92z/video/7672423037723004182" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">maya.don92z</div>
+  <div class="desc">#waxing #waxkit #viral #wax </div>
+</td>
+</tr>
+<tr data-time="2026-08-08T02:24" data-views="420029" data-score="28.4">
+<td class="center">45</td>
+<td class="center"><span class="score lo">28</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671357213369175309.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729857712505985064/17298577125059850640.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式条纹无袖吊带背心阔腿裤套装，夏季休闲宽松</div>
+  <div class="item-en">Women's Striped Sleeveless Cami Top and Wide Leg Pants Set, </div>
+  
+</td>
+<td class="right num">420.0K</td>
+<td class="right">12.4K</td>
+<td class="nowrap">2026-08-08T02:24</td>
+<td class="center"><a href="https://www.tiktok.com/@_violetfaye_/video/7671357213369175309" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">_violetfaye_</div>
+  <div class="desc">so happy these don’t give me 🐪 toe #brandymelville #tealclot</div>
+</td>
+</tr>
+<tr data-time="2026-08-07T04:31" data-views="221573" data-score="28.1">
+<td class="center">46</td>
+<td class="center"><span class="score lo">28</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671018949575806210.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729526934953957970/17295269349539579700.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">时尚礼品 A58 PLUS Plus 女式奢华 8 合 1 手表 2 带环耳环 Fi</div>
+  <div class="item-en">Fashion Gifts A58 PLUS Plus Womens Luxury 8 in 1 Watches 2 S</div>
+  
+</td>
+<td class="right num">221.6K</td>
+<td class="right">8.1K</td>
+<td class="nowrap">2026-08-07T04:31</td>
+<td class="center"><a href="https://www.tiktok.com/@.foundthat4u/video/7671018949575806210" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">.foundthat4u</div>
+  <div class="desc">best thing #watch #smartwatch #jewellery #gold #accessories </div>
+</td>
+</tr>
+<tr data-time="2026-07-31T02:19" data-views="1338996" data-score="28.0">
+<td class="center">47</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7668387277042748694.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729543602249636666/17295436022496366660.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">大理石效果防水墙瓷砖贴纸 30 厘米 x 60 厘米 10-20 件轻松 DIY PVC Pe</div>
+  <div class="item-en">Marble Effect Waterproof Wall Tile Stickers 30cm x 60cm 10-2</div>
+  
+</td>
+<td class="right num">1.3M</td>
+<td class="right">2.3K</td>
+<td class="nowrap">2026-07-31T02:19</td>
+<td class="center"><a href="https://www.tiktok.com/@carlatokshop/video/7668387277042748694" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">carlatokshop</div>
+  <div class="desc">@RABAE High shine and Waterproof!! #peelandstick #diy #stick</div>
+</td>
+</tr>
+<tr data-time="2026-06-09T21:43" data-views="1421741" data-score="27.7">
+<td class="center">48</td>
+<td class="center"><span class="score lo">28</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7649390937008852246.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729844101366061462/17298441013660614620.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[独家] Steph 的精选产品（Fit Me Loose Powder、Peel Off Lip Stain、Summer S</div>
+  <div class="item-en">[EXCLUSIVE] Steph's Top Picks (Fit Me Loose Powder, Peel Off</div>
+  
+</td>
+<td class="right num">1.4M</td>
+<td class="right">49.2K</td>
+<td class="nowrap">2026-06-09T21:43</td>
+<td class="center"><a href="https://www.tiktok.com/@stephanievavron/video/7649390937008852246" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">stephanievavron</div>
+  <div class="desc">Guys this bundle is WILD ! Hope you guys enjoy 💋 #bundle #ba</div>
+</td>
+</tr>
+<tr data-time="2026-08-06T17:20" data-views="913914" data-score="27.4">
+<td class="center">49</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670845939069832470.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729827765754698018/17298277657546980180.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">DIY 压力球制作套件，包括 6 个填充物包，10 个透明空白软垫</div>
+  <div class="item-en">DIY Stress Ball Making Kit, Includes 6 Filling Packs, 10 Tra</div>
+  
+</td>
+<td class="right num">913.9K</td>
+<td class="right">3.3K</td>
+<td class="nowrap">2026-08-06T17:20</td>
+<td class="center"><a href="https://www.tiktok.com/@sarahandherfriends/video/7670845939069832470" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">sarahandherfriends</div>
+  <div class="desc">These make your own squishy kits are fantastic for the kids </div>
+</td>
+</tr>
+<tr data-time="2026-05-25T18:37" data-views="3956906" data-score="27.4">
+<td class="center">50</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7643648514081246486.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729795631937133179/17297956319371331790.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">儿童版的十万个为什么：全彩视觉百科全书，儿童百科全书</div>
+  <div class="item-en">100,000 Whys for Kids: A Full-Color Visual Encyclopedia  ,Ch</div>
+  
+</td>
+<td class="right num">4.0M</td>
+<td class="right">23.2K</td>
+<td class="nowrap">2026-05-25T18:37</td>
+<td class="center"><a href="https://www.tiktok.com/@dudabook0/video/7643648514081246486" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">dudabook0</div>
+  <div class="desc">#educacion #childrensbook #encyclopedia #parentingtips #tikt</div>
+</td>
+</tr>
+<tr data-time="2026-07-05T15:27" data-views="331057" data-score="27.3">
+<td class="center">51</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7658942041962941718.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729405948786806146/17294059487868061460.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式蝴蝶结装饰撞色蕾丝吊带睡裙和丁字裤套装，舒适柔软睡衣套装</div>
+  <div class="item-en">Women's Bow Decor Contrast Lace Cami Nightdress & Thong Set,</div>
+  
+</td>
+<td class="right num">331.1K</td>
+<td class="right">4.7K</td>
+<td class="nowrap">2026-07-05T15:27</td>
+<td class="center"><a href="https://www.tiktok.com/@tiktokfindfyyy/video/7658942041962941718" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">tiktokfindfyyy</div>
+  <div class="desc">✨ Girls! Do yourself a favor and get these!!! #spotlight #ni</div>
+</td>
+</tr>
+<tr data-time="2026-07-29T05:39" data-views="218111" data-score="26.9">
+<td class="center">52</td>
+<td class="center"><span class="score lo">27</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7667696698071715094.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729832565090327496/17298325650903274960.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">互动音乐毛绒玩具 – 香蕉、草莓、胡萝卜电动毛绒玩具</div>
+  <div class="item-en">Interactive Music Plush Toy – Banana, Strawberry & Carrot El</div>
+  
+</td>
+<td class="right num">218.1K</td>
+<td class="right">5.0K</td>
+<td class="nowrap">2026-07-29T05:39</td>
+<td class="center"><a href="https://www.tiktok.com/@shaunpaulbullock/video/7667696698071715094" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shaunpaulbullock</div>
+  <div class="desc">This is mad! </div>
+</td>
+</tr>
+<tr data-time="2026-08-07T19:27" data-views="469627" data-score="26.7">
+<td class="center">53</td>
+<td class="center"><span class="score lo">27</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671249924075441430.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729773554625976498/17297735546259764980.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【Dr.Melaxin 官方】Cemenrete 钙质祛斑眼霜 15ml |达</div>
+  <div class="item-en">[Dr.Melaxin Official] Cemenrete Calcium Dark Spot Correcting</div>
+  
+</td>
+<td class="right num">469.6K</td>
+<td class="right">2.1K</td>
+<td class="nowrap">2026-08-07T19:27</td>
+<td class="center"><a href="https://www.tiktok.com/@venkigrwm/video/7671249924075441430" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">venkigrwm</div>
+  <div class="desc">For a darker shade just mix a little bit of tint to it #dark</div>
+</td>
+</tr>
+<tr data-time="2026-05-30T23:54" data-views="237892" data-score="26.6">
+<td class="center">54</td>
+<td class="center"><span class="score lo">27</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7645713754012814614.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729784734529723280/17297847345297232800.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">条纹分体泳衣，优雅性感挂脖短款上衣和平角短裤，女式运动型</div>
+  <div class="item-en">Striped Tankini Swimsuit, Elegant Sexy Halter Crop Top & Boy</div>
+  
+</td>
+<td class="right num">237.9K</td>
+<td class="right">12.6K</td>
+<td class="nowrap">2026-05-30T23:54</td>
+<td class="center"><a href="https://www.tiktok.com/@ihe4rtmyse1f/video/7645713754012814614" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ihe4rtmyse1f</div>
+  <div class="desc">Tagged some tankinis in basket #bikini #tankini #summeroutfi</div>
+</td>
+</tr>
+<tr data-time="2026-08-07T09:03" data-views="313466" data-score="25.9">
+<td class="center">55</td>
+<td class="center"><span class="score lo">26</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671089011938626829.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729780890249762973/17297808902497629730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">DR.DENT 紫色漱口水 - 20/40 袋装 - 不含过氧化物 - 不含酒精 - V</div>
+  <div class="item-en">DR.DENT Purple Mouthwash - 20/40 Sachets Pack - Peroxide-Fre</div>
+  
+</td>
+<td class="right num">313.5K</td>
+<td class="right">1.5K</td>
+<td class="nowrap">2026-08-07T09:03</td>
+<td class="center"><a href="https://www.tiktok.com/@clark.finds/video/7671089011938626829" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">clark.finds</div>
+  <div class="desc">I just can’t believe it worked that well! #drdent #whiteteet</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T23:35" data-views="211330" data-score="25.9">
+<td class="center">56</td>
+<td class="center"><span class="score lo">26</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672055947916791070.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729409385160675045/17294093851606750450.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式纯色PU皮革单肩包，简约大容量可调节Cr</div>
+  <div class="item-en">Women's Solid Color PU Leather Shoulder Bag, Simple Large-Ca</div>
+  
+</td>
+<td class="right num">211.3K</td>
+<td class="right">1.7K</td>
+<td class="nowrap">2026-08-09T23:35</td>
+<td class="center"><a href="https://www.tiktok.com/@shopwithgig1/video/7672055947916791070" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shopwithgig1</div>
+  <div class="desc">the perfect back to school tote</div>
+</td>
+</tr>
+<tr data-time="2026-07-11T05:16" data-views="1551929" data-score="25.5">
+<td class="center">57</td>
+<td class="center"><span class="score lo">26</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7661011154931698966.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729588761169988189/17295887611699881890.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">PoreFilter 粉饼 - 毛孔模糊且不含滑石粉定妆粉 - 美容</div>
+  <div class="item-en">PoreFilter Pressed Powder - Pore-Blurring & Talc-Free Settin</div>
+  
+</td>
+<td class="right num">1.6M</td>
+<td class="right">6.6K</td>
+<td class="nowrap">2026-07-11T05:16</td>
+<td class="center"><a href="https://www.tiktok.com/@ggforeveryoung/video/7661011154931698966" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ggforeveryoung</div>
+  <div class="desc">PoreFilter Pressed Powder - Pore-Blurring & Talc-Free Settin</div>
+</td>
+</tr>
+<tr data-time="2026-06-19T01:22" data-views="1532001" data-score="25.0">
+<td class="center">58</td>
+<td class="center"><span class="score lo">25</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7652787184952413462.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729733993270122693/17297339932701226930.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[仅限带触摸板的键盘保护套]适用于 iPad 10 代 C 的触摸键盘保护套</div>
+  <div class="item-en">[only keyboard case with touchpad]Touch Keyboard Case for iP</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">33.1K</td>
+<td class="nowrap">2026-06-19T01:22</td>
+<td class="center"><a href="https://www.tiktok.com/@underatedproducts/video/7652787184952413462" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">underatedproducts</div>
+  <div class="desc">transformed my iPad into a laptop 💖💻  #ipad #ipadkeyboard #i</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T23:55" data-views="379468" data-score="24.6">
+<td class="center">59</td>
+<td class="center"><span class="score lo">25</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672061093535059222.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729814563851770408/17298145638517704080.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【夏日大结局】无痛全身脱毛套装 – 非常适合家庭脱毛，在</div>
+  <div class="item-en">【Summer Finale】Painless Full Body Waxing Kit – Perfect for H</div>
+  
+</td>
+<td class="right num">379.5K</td>
+<td class="right">1.4K</td>
+<td class="nowrap">2026-08-09T23:55</td>
+<td class="center"><a href="https://www.tiktok.com/@chelseacatherine_xo/video/7672061093535059222" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">chelseacatherine_xo</div>
+  <div class="desc">Replying to @secretttt🤫  bargain! #waxkit </div>
+</td>
+</tr>
+<tr data-time="2026-07-16T21:20" data-views="299957" data-score="24.6">
+<td class="center">60</td>
+<td class="center"><span class="score lo">25</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7663115116220566806.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729420782172933538/17294207821729335380.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">充气洗发水盆，1 件多功能便携式盆，带</div>
+  <div class="item-en">Inflatable Hair Washing Shampoo Basin, 1 Count Multifunction</div>
+  
+</td>
+<td class="right num">300.0K</td>
+<td class="right">9.8K</td>
+<td class="nowrap">2026-07-16T21:20</td>
+<td class="center"><a href="https://www.tiktok.com/@gingeryoddha/video/7663115116220566806" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">gingeryoddha</div>
+  <div class="desc">#washbasin #disability #distilledwater to #detox your #hair </div>
+</td>
+</tr>
+<tr data-time="2026-08-04T20:06" data-views="307092" data-score="24.1">
+<td class="center">61</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670013915199180054.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729433815097183282/17294338150971832820.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">祖母，我想听你的故事 - 你祖母会喜欢的礼物</div>
+  <div class="item-en">Grandmother, I Want to Hear Your Story - The Present Your Gr</div>
+  
+</td>
+<td class="right num">307.1K</td>
+<td class="right">2.9K</td>
+<td class="nowrap">2026-08-04T20:06</td>
+<td class="center"><a href="https://www.tiktok.com/@srutrujy/video/7670013915199180054" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">srutrujy</div>
+  <div class="desc">#grandmmotheriwanttihearyourstory #grandma #grandmalove #gra</div>
+</td>
+</tr>
+<tr data-time="2026-06-13T14:00" data-views="2247113" data-score="24.0">
+<td class="center">62</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7650755802818448662.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729797452084844869/17297974520848448690.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">SOPAMI 环保洗衣机清洁剂 12 片深层清洁内槽和</div>
+  <div class="item-en">SOPAMI Eco-Friendly Washing Machine Cleaner 12 Tablets Deep </div>
+  
+</td>
+<td class="right num">2.2M</td>
+<td class="right">2.4K</td>
+<td class="nowrap">2026-06-13T14:00</td>
+<td class="center"><a href="https://www.tiktok.com/@momcleansfast/video/7650755802818448662" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">momcleansfast</div>
+  <div class="desc">A fresh washer is 1 click away. 👇 #cleaningtips #clean #clea</div>
+</td>
+</tr>
+<tr data-time="2026-07-26T19:47" data-views="302949" data-score="23.9">
+<td class="center">63</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666801961814986006.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729490768182942329/17294907681829423290.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Manga 湿润外观睫毛簇套装，带 Bo 的 Spiky Wispy Cluster 睫毛延长件</div>
+  <div class="item-en">Manga Wet Look Lash Clusters Kit, Spiky Wispy Cluster Eyelas</div>
+  
+</td>
+<td class="right num">302.9K</td>
+<td class="right">3.6K</td>
+<td class="nowrap">2026-07-26T19:47</td>
+<td class="center"><a href="https://www.tiktok.com/@hearts4xisha/video/7666801961814986006" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">hearts4xisha</div>
+  <div class="desc">lashes I think fluttershy would wear!! 🤍🩷🪽  .  .  .  #flutte</div>
+</td>
+</tr>
+<tr data-time="2026-08-11T01:03" data-views="291935" data-score="23.7">
+<td class="center">64</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672449793074973974.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729734790441245061/17297347904412450610.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">缝隙清洁刷，浴室瓷砖凹槽缝隙清洁刷，优质缝隙</div>
+  <div class="item-en">Crevice Cleaning Brush, Bathroom Tile Groove Gap Cleaning Br</div>
+  
+</td>
+<td class="right num">291.9K</td>
+<td class="right">610</td>
+<td class="nowrap">2026-08-11T01:03</td>
+<td class="center"><a href="https://www.tiktok.com/@lilliemurrayx/video/7672449793074973974" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">lilliemurrayx</div>
+  <div class="desc">Wow & wow! Check if you get yours free shipping?! Well cheap</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T23:38" data-views="384283" data-score="23.6">
+<td class="center">65</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672427715198258454.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729812635360336842/17298126353603368420.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">维多利亚的秘密裸香草身体乳 236 毫升</div>
+  <div class="item-en">Victoria´s Secret Bare Vanilla 236ml Body Lotion</div>
+  
+</td>
+<td class="right num">384.3K</td>
+<td class="right">2.1K</td>
+<td class="nowrap">2026-08-10T23:38</td>
+<td class="center"><a href="https://www.tiktok.com/@ttsfindsbykay/video/7672427715198258454" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ttsfindsbykay</div>
+  <div class="desc">Bodysprays and body lotions in with the offer so dont miss o</div>
+</td>
+</tr>
+<tr data-time="2026-07-31T03:32" data-views="329579" data-score="23.5">
+<td class="center">66</td>
+<td class="center"><span class="score lo">24</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7668406248005537046.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729429759208230637/17294297592082306370.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Halara 女式高腰直筒工作裤，带侧袋，时尚</div>
+  <div class="item-en">Halara Women's High Waisted Straight Leg Work Trousers with </div>
+  
+</td>
+<td class="right num">329.6K</td>
+<td class="right">3.6K</td>
+<td class="nowrap">2026-07-31T03:32</td>
+<td class="center"><a href="https://www.tiktok.com/@more.nevaeh/video/7668406248005537046" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">more.nevaeh</div>
+  <div class="desc">INSANE #halara #workoutfit </div>
+</td>
+</tr>
+<tr data-time="2026-08-04T00:00" data-views="227247" data-score="23.3">
+<td class="center">67</td>
+<td class="center"><span class="score lo">23</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7669740087013428502.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729620027658312591/17296200276583125910.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">DRFLASH 挂烫机 便携式旅行挂烫机 7 模式</div>
+  <div class="item-en">DRFLASH Garment Steamer for Clothes Portable Travel Clothing</div>
+  
+</td>
+<td class="right num">227.2K</td>
+<td class="right">412</td>
+<td class="nowrap">2026-08-04T00:00</td>
+<td class="center"><a href="https://www.tiktok.com/@freshpressdaily6/video/7669740087013428502" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">freshpressdaily6</div>
+  <div class="desc">53%OFF! 🛑 Ladies, stop wasting money on dry cleaning. Get th</div>
+</td>
+</tr>
+<tr data-time="2026-07-26T04:05" data-views="1480746" data-score="23.2">
+<td class="center">68</td>
+<td class="center"><span class="score lo">23</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666379545393646881.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729608906480130293/17296089064801302930.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">优质防水自行车帐篷户外储物棚 210D 牛津自行车存放处 Ga</div>
+  <div class="item-en">Premium Waterproof Bike Tent Outdoor Storage Shed 210D Oxfor</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">2.5K</td>
+<td class="nowrap">2026-07-26T04:05</td>
+<td class="center"><a href="https://www.tiktok.com/@screwdriverclub/video/7666379545393646881" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">screwdriverclub</div>
+  <div class="desc">#tiktokshop #tiktokholidayhaul #goodthings #tiktokmademebuyi</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T02:05" data-views="503499" data-score="23.2">
+<td class="center">69</td>
+<td class="center"><span class="score lo">23</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671352554462137622.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729740657115568466/17297406571155684660.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">高露洁 Max White 紫色牙齿美白口腔护理套装含精华液，超白</div>
+  <div class="item-en">Colgate Max White Purple Teeth Whitening Oral Care Bundle wi</div>
+  
+</td>
+<td class="right num">503.5K</td>
+<td class="right">775</td>
+<td class="nowrap">2026-08-08T02:05</td>
+<td class="center"><a href="https://www.tiktok.com/@itz_balaaji/video/7671352554462137622" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">itz_balaaji</div>
+  <div class="desc">Holy crap that actually worked…</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T15:27" data-views="249156" data-score="22.2">
+<td class="center">70</td>
+<td class="center"><span class="score lo">22</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671930282345237782.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729872591474957254/17298725914749572540.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">唇锁唇彩（色号：KASH Beauty）</div>
+  <div class="item-en">Lip Lock Lip Stain - KASH Beauty</div>
+  
+</td>
+<td class="right num">249.2K</td>
+<td class="right">2.1K</td>
+<td class="nowrap">2026-08-09T15:27</td>
+<td class="center"><a href="https://www.tiktok.com/@glowwithjojo/video/7671930282345237782" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">glowwithjojo</div>
+  <div class="desc">Kash beauty lip lock lip stain #lipstain #kashbeauty #lipsti</div>
+</td>
+</tr>
+<tr data-time="2026-07-30T01:00" data-views="449826" data-score="22.0">
+<td class="center">71</td>
+<td class="center"><span class="score lo">22</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7667884030087466262.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729402666658467063/17294026666584670630.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">CrystalArmor 2 件装钢化玻璃屏幕保护膜，与 iPhone 兼容</div>
+  <div class="item-en">CrystalArmor 2-Pack Tempered Glass Screen Protectors, compat</div>
+  
+</td>
+<td class="right num">449.8K</td>
+<td class="right">2.7K</td>
+<td class="nowrap">2026-07-30T01:00</td>
+<td class="center"><a href="https://www.tiktok.com/@purzeu5qi9/video/7667884030087466262" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">purzeu5qi9</div>
+  <div class="desc">Mobile phones are "tortured" every day 💥 A really scratch-re</div>
+</td>
+</tr>
+<tr data-time="2026-07-23T02:28" data-views="808580" data-score="21.8">
+<td class="center">72</td>
+<td class="center"><span class="score lo">22</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7664966869635304727.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729582474817215310/17295824748172153100.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">2026 ENMALL 新款多用途高效清洁剂，厨房除油剂，带Noz</div>
+  <div class="item-en">2026 ENMALL New Multi-purpose High-efficiency Cleaner,kitche</div>
+  
+</td>
+<td class="right num">808.6K</td>
+<td class="right">1.6K</td>
+<td class="nowrap">2026-07-23T02:28</td>
+<td class="center"><a href="https://www.tiktok.com/@lauras.lazygirllogic/video/7664966869635304727" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">lauras.lazygirllogic</div>
+  <div class="desc">unpopular opinion: If you clean your air fryer after EVERY u</div>
+</td>
+</tr>
+<tr data-time="2026-06-16T02:00" data-views="3718935" data-score="21.8">
+<td class="center">73</td>
+<td class="center"><span class="score lo">22</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7651591080713948438.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729798548078106780/17297985480781067800.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">紫外线牙刷消毒器-3分钟杀灭99.9%细菌，适用于电动牙刷</div>
+  <div class="item-en">UV Toothbrush Steriliser - Kills 99.9% Of Bacteria in 3 Minu</div>
+  
+</td>
+<td class="right num">3.7M</td>
+<td class="right">15.0K</td>
+<td class="nowrap">2026-06-16T02:00</td>
+<td class="center"><a href="https://www.tiktok.com/@whitesbeaconsfield/video/7651591080713948438" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">whitesbeaconsfield</div>
+  <div class="desc">@OLIVIA ATTWOOD this one's for you 👀🪥 Because your toothbrus</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T02:00" data-views="279864" data-score="21.1">
+<td class="center">74</td>
+<td class="center"><span class="score lo">21</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671253845464403233.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729671365216016911/17296713652160169110.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">适合健身房、旅行和日常使用的无线蓝牙 6.0 耳机，降噪，145</div>
+  <div class="item-en">Wireless Bluetooth 6.0 Earbuds for Gym, Travel & Daily Use, </div>
+  
+</td>
+<td class="right num">279.9K</td>
+<td class="right">540</td>
+<td class="nowrap">2026-08-08T02:00</td>
+<td class="center"><a href="https://www.tiktok.com/@njxrguheyetf/video/7671253845464403233" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">njxrguheyetf</div>
+  <div class="desc">🎁 Bundle up with these **folding headphones**! **Bluetooth 6</div>
+</td>
+</tr>
+<tr data-time="2026-06-07T04:54" data-views="573913" data-score="20.6">
+<td class="center">75</td>
+<td class="center"><span class="score lo">21</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7648388512005377310.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729622385660697140/17296223856606971400.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">新款仿珍珠吊坠乳头扣身体链，酒吧夜店服装</div>
+  <div class="item-en">New Style Imitation Pearl Pendant Nipple Clasp Body Chain, B</div>
+  
+</td>
+<td class="right num">573.9K</td>
+<td class="right">9.8K</td>
+<td class="nowrap">2026-06-07T04:54</td>
+<td class="center"><a href="https://www.tiktok.com/@chris_reviews_it/video/7648388512005377310" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">chris_reviews_it</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-05T21:08" data-views="277135" data-score="20.5">
+<td class="center">76</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670533612160240918.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729839159898184571/17298391598981845710.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Yesfover 适用于 Magsafe 车载支架、汽车磁性手机支架、真空 Phon</div>
+  <div class="item-en">Yesfover for Magsafe Car Mount, Magnetic Phone Holders for Y</div>
+  
+</td>
+<td class="right num">277.1K</td>
+<td class="right">1.3K</td>
+<td class="nowrap">2026-08-05T21:08</td>
+<td class="center"><a href="https://www.tiktok.com/@shoppathon/video/7670533612160240918" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shoppathon</div>
+  <div class="desc">POV: You Finally Bought a Phone Holder That Actually Works..</div>
+</td>
+</tr>
+<tr data-time="2026-05-29T18:55" data-views="1089141" data-score="20.2">
+<td class="center">77</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7643619043865349398.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729600947335502324/17296009473355023240.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">【medicube官方】胶原蛋白烟酰胺果冻霜（水解胶原蛋白+烟酰胺）</div>
+  <div class="item-en">[medicube Official] Collagen Niacinamide Jelly Cream (Hydrol</div>
+  
+</td>
+<td class="right num">1.1M</td>
+<td class="right">1.6K</td>
+<td class="nowrap">2026-05-29T18:55</td>
+<td class="center"><a href="https://www.tiktok.com/@nicolejaved/video/7643619043865349398" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">nicolejaved</div>
+  <div class="desc">Collagen Jelly by @medicube UK 🙏🏽 #medicube #collagen #jelly</div>
+</td>
+</tr>
+<tr data-time="2026-06-19T07:21" data-views="1004989" data-score="20.0">
+<td class="center">78</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7652879583435328790.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729582083536296282/17295820835362962820.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Lubluelu 无绳立式吸尘器，45000Pa 强力吸力，自立式</div>
+  <div class="item-en">Lubluelu Cordless Upright Vacuum Cleaner, 45000Pa Powerful S</div>
+  
+</td>
+<td class="right num">1.0M</td>
+<td class="right">2.0K</td>
+<td class="nowrap">2026-06-19T07:21</td>
+<td class="center"><a href="https://www.tiktok.com/@dbtokshop/video/7652879583435328790" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">dbtokshop</div>
+  <div class="desc">It’s worth knowing this #CleanTok #vacuum </div>
+</td>
+</tr>
+<tr data-time="2026-07-30T15:30" data-views="359203" data-score="19.7">
+<td class="center">79</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7668219975538134275.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729442470603624224/17294424706036242240.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">超级忍者果蝇陷阱 - 高效室内陷阱 - 环保回收</div>
+  <div class="item-en">Super Ninja Fruit Fly Trap - Highly Effective Indoor Traps -</div>
+  
+</td>
+<td class="right num">359.2K</td>
+<td class="right">1.3K</td>
+<td class="nowrap">2026-07-30T15:30</td>
+<td class="center"><a href="https://www.tiktok.com/@allukreviews/video/7668219975538134275" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">allukreviews</div>
+  <div class="desc">they are everywhere in the uk atm</div>
+</td>
+</tr>
+<tr data-time="2026-06-26T15:45" data-views="1477417" data-score="19.6">
+<td class="center">80</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7655537421399919894.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729845443606059889/17298454436060598890.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">无线感应音箱五合一蓝牙音箱带手机支架，立体声</div>
+  <div class="item-en">Wireless Induction Speaker 5-in-1 Bluetooth Speaker with Pho</div>
+  
+</td>
+<td class="right num">1.5M</td>
+<td class="right">6.9K</td>
+<td class="nowrap">2026-06-26T15:45</td>
+<td class="center"><a href="https://www.tiktok.com/@bethanykate162/video/7655537421399919894" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">bethanykate162</div>
+  <div class="desc">Struggling for gift ideas? 🎁 This 5‑in‑1 speaker is the answ</div>
+</td>
+</tr>
+<tr data-time="2026-06-09T17:24" data-views="829390" data-score="19.6">
+<td class="center">81</td>
+<td class="center"><span class="score lo">20</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7649324113277898006.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729697702565878750/17296977025658787500.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">OUFALI 无线果冻文胸女式舒适文胸支撑无钢圈聚拢型</div>
+  <div class="item-en">OUFALI Wireless Jelly Bras Women Comfortable Bra Supportive </div>
+  
+</td>
+<td class="right num">829.4K</td>
+<td class="right">759</td>
+<td class="nowrap">2026-06-09T17:24</td>
+<td class="center"><a href="https://www.tiktok.com/@keeley.potts/video/7649324113277898006" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">keeley.potts</div>
+  <div class="desc">😍 My FAV bras 👌 #bra #wirelessbra #seamlessbra </div>
+</td>
+</tr>
+<tr data-time="2026-06-10T00:47" data-views="636060" data-score="19.0">
+<td class="center">82</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7649438221289540867.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729582083536296282/17295820835362962820.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Lubluelu 无绳立式吸尘器，45000Pa 强力吸力，自立式</div>
+  <div class="item-en">Lubluelu Cordless Upright Vacuum Cleaner, 45000Pa Powerful S</div>
+  
+</td>
+<td class="right num">636.1K</td>
+<td class="right">1.1K</td>
+<td class="nowrap">2026-06-10T00:47</td>
+<td class="center"><a href="https://www.tiktok.com/@dbtokshop/video/7649438221289540867" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">dbtokshop</div>
+  <div class="desc">Can’t believe it #cordlessvacuum #CleanTok #cleaning </div>
+</td>
+</tr>
+<tr data-time="2026-08-07T05:45" data-views="276326" data-score="19.0">
+<td class="center">83</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671038169604689174.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729863575528577958/17298635755285779580.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">买 1 送 3 --3 色眼影棒，新款持久防水乳霜</div>
+  <div class="item-en">Buy 1 get 3 free --3 Color Eyeshadow Stick,New Long Lasting </div>
+  
+</td>
+<td class="right num">276.3K</td>
+<td class="right">442</td>
+<td class="nowrap">2026-08-07T05:45</td>
+<td class="center"><a href="https://www.tiktok.com/@jackiethrifts1/video/7671038169604689174" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">jackiethrifts1</div>
+  <div class="desc">The easiest eyeshadow look ever 👀✨ Swipe it on, blend it out</div>
+</td>
+</tr>
+<tr data-time="2026-08-09T02:55" data-views="210658" data-score="18.8">
+<td class="center">84</td>
+<td class="center"><span class="score lo">19</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671736318430416150.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729781222059186308/17297812220591863080.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">适合 1-3 岁幼儿的婴儿平衡车，4 轮骑乘式自行车，带灯光和音乐</div>
+  <div class="item-en">Baby Balance Bike for Toddlers 1–3 Years, 4 Wheel Ride-On Bi</div>
+  
+</td>
+<td class="right num">210.7K</td>
+<td class="right">1.6K</td>
+<td class="nowrap">2026-08-09T02:55</td>
+<td class="center"><a href="https://www.tiktok.com/@alexharrison.15/video/7671736318430416150" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">alexharrison.15</div>
+  <div class="desc">safe to say my head is going to be done in but i mean £15 we</div>
+</td>
+</tr>
+<tr data-time="2026-08-05T17:54" data-views="461510" data-score="18.5">
+<td class="center">85</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670483780766813462.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729881611985001382/17298816119850013820.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">男士剃须刀刀片替换补充装（带手柄），有 24 刀片或 48-B 可供选择</div>
+  <div class="item-en">Men's Razor Blade Replacement Refills with Handle, Available</div>
+  
+</td>
+<td class="right num">461.5K</td>
+<td class="right">334</td>
+<td class="nowrap">2026-08-05T17:54</td>
+<td class="center"><a href="https://www.tiktok.com/@harrythames539/video/7670483780766813462" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">harrythames539</div>
+  <div class="desc">💯🪒🔥One clean stroke, no stubble left #RazorBlades #MensGroom</div>
+</td>
+</tr>
+<tr data-time="2026-07-25T23:33" data-views="445270" data-score="18.5">
+<td class="center">86</td>
+<td class="center"><span class="score lo">18</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666489085778824470.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729752134680811904/17297521346808119040.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">新款郁金香 USB 充电夜灯，卧室花束台灯</div>
+  <div class="item-en">New Tulip USB Rechargeable Night Light, Flower Bouquet Table</div>
+  
+</td>
+<td class="right num">445.3K</td>
+<td class="right">12.1K</td>
+<td class="nowrap">2026-07-25T23:33</td>
+<td class="center"><a href="https://www.tiktok.com/@hunlouux/video/7666489085778824470" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">hunlouux</div>
+  <div class="desc">#nightlight #flowerlight #tulip #girly #bedroomdecor </div>
+</td>
+</tr>
+<tr data-time="2026-06-30T21:15" data-views="473687" data-score="18.4">
+<td class="center">87</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7657176450654620950.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729786863015074312/17297868630150743120.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[Heatwave Essential] Redhut 2026 台扇带 LED 显示 USB 供电便携式</div>
+  <div class="item-en">[Heatwave Essential] Redhut 2026 Desk Fan with LED Display U</div>
+  
+</td>
+<td class="right num">473.7K</td>
+<td class="right">787</td>
+<td class="nowrap">2026-06-30T21:15</td>
+<td class="center"><a href="https://www.tiktok.com/@thelittlefamilyxx/video/7657176450654620950" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">thelittlefamilyxx</div>
+  <div class="desc">#fyp </div>
+</td>
+</tr>
+<tr data-time="2026-07-17T20:47" data-views="467840" data-score="18.4">
+<td class="center">88</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7663477795049196822.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729807288062416972/17298072880624169720.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">便携式颈挂式风扇 7000mAh 可充电免提，隐藏 5 档速度 -</div>
+  <div class="item-en">Portable Wearable Neck Fan 7000mAh Rechargeable Hands-Free w</div>
+  
+</td>
+<td class="right num">467.8K</td>
+<td class="right">189</td>
+<td class="nowrap">2026-07-17T20:47</td>
+<td class="center"><a href="https://www.tiktok.com/@kirsty.williams34/video/7663477795049196822" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">kirsty.williams34</div>
+  <div class="desc">50% OFF the neck fan and they are so good in this weather #n</div>
+</td>
+</tr>
+<tr data-time="2026-06-29T20:19" data-views="754020" data-score="18.1">
+<td class="center">89</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7656790928488680726.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729710379023833686/17297103790238336860.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Rimmel 哦我的光泽！滑棒</div>
+  <div class="item-en">Rimmel Oh My Gloss! Slip Stick</div>
+  
+</td>
+<td class="right num">754.0K</td>
+<td class="right">980</td>
+<td class="nowrap">2026-06-29T20:19</td>
+<td class="center"><a href="https://www.tiktok.com/@the_freckle_fam/video/7656790928488680726" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">the_freckle_fam</div>
+  <div class="desc">Always read the reviews!! @rimmellondon #lipslip #lipstick #</div>
+</td>
+</tr>
+<tr data-time="2026-06-26T22:34" data-views="382896" data-score="17.9">
+<td class="center">90</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7655712372270681366.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729582511349471379/17295825113494713790.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">雷明顿 (REMINGTON) 面部脱毛剂，二合一增强修眉和温和面部护理</div>
+  <div class="item-en">REMINGTON Facial Hair Remover, 2-in-1 Enhanced Eyebrow Shapi</div>
+  
+</td>
+<td class="right num">382.9K</td>
+<td class="right">408</td>
+<td class="nowrap">2026-06-26T22:34</td>
+<td class="center"><a href="https://www.tiktok.com/@samtastic40s/video/7655712372270681366" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">samtastic40s</div>
+  <div class="desc">An absolute game changer for hairy faced ladies like me! #Se</div>
+</td>
+</tr>
+<tr data-time="2026-06-26T22:01" data-views="200741" data-score="17.6">
+<td class="center">91</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7655704023894412566.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729786863015074312/17297868630150743120.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[Heatwave Essential] Redhut 2026 台扇带 LED 显示 USB 供电便携式</div>
+  <div class="item-en">[Heatwave Essential] Redhut 2026 Desk Fan with LED Display U</div>
+  
+</td>
+<td class="right num">200.7K</td>
+<td class="right">624</td>
+<td class="nowrap">2026-06-26T22:01</td>
+<td class="center"><a href="https://www.tiktok.com/@thelittlefamilyxx/video/7655704023894412566" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">thelittlefamilyxx</div>
+  <div class="desc">Definitely worth the money! So happy with them 💜💖#fyp </div>
+</td>
+</tr>
+<tr data-time="2026-07-25T18:57" data-views="320626" data-score="17.5">
+<td class="center">92</td>
+<td class="center"><span class="score lo">18</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666418100564184342.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729456034496614093/17294560344966140930.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">FeelinGirl 女式无钢圈文胸舒适文胸无钢圈无衬里吊带背心文胸</div>
+  <div class="item-en">FeelinGirl Women's Wireless Bra Comfort Bralettes No Underwi</div>
+  
+</td>
+<td class="right num">320.6K</td>
+<td class="right">372</td>
+<td class="nowrap">2026-07-25T18:57</td>
+<td class="center"><a href="https://www.tiktok.com/@hayleyscurvyclothing/video/7666418100564184342" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">hayleyscurvyclothing</div>
+  <div class="desc">The wireless bra by feelingirl  that supports my double Gs .</div>
+</td>
+</tr>
+<tr data-time="2026-07-21T03:53" data-views="299454" data-score="17.4">
+<td class="center">93</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7664700712789658902.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729756814975473842/17297568149754738420.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[Dr.Melaxin 官方] Peel Shot 去角质 TX-喷雾 200ml，氨甲环酸和镍</div>
+  <div class="item-en">[Dr.Melaxin Official] Peel Shot Exfoliating TX-Spray 200ml, </div>
+  
+</td>
+<td class="right num">299.5K</td>
+<td class="right">288</td>
+<td class="nowrap">2026-07-21T03:53</td>
+<td class="center"><a href="https://www.tiktok.com/@titchtaylortt/video/7664700712789658902" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">titchtaylortt</div>
+  <div class="desc">Most people in the UK have never even heard of peel shot but</div>
+</td>
+</tr>
+<tr data-time="2026-07-26T19:25" data-views="264577" data-score="17.2">
+<td class="center">94</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7666796276494716182.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729594409849362834/17295944098493628340.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Utopia Bedding 高级防水床垫保护垫，透气粘胶床垫</div>
+  <div class="item-en">Utopia Bedding Premium Waterproof Mattress Protector, Breath</div>
+  
+</td>
+<td class="right num">264.6K</td>
+<td class="right">491</td>
+<td class="nowrap">2026-07-26T19:25</td>
+<td class="center"><a href="https://www.tiktok.com/@alisonjames894/video/7666796276494716182" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">alisonjames894</div>
+  <div class="desc">Premium Waterproof Mattress Protector Breathable Viscose Mat</div>
+</td>
+</tr>
+<tr data-time="2026-07-16T15:29" data-views="278569" data-score="17.2">
+<td class="center">95</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7663024689740123414.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729456267478994183/17294562674789941830.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Minky Flexi Edge 扫地机多表面可伸缩吸水扒可重复使用锥形</div>
+  <div class="item-en">Minky Flexi Edge Floor Sweeper Multi-surface Extendable Sque</div>
+  
+</td>
+<td class="right num">278.6K</td>
+<td class="right">510</td>
+<td class="nowrap">2026-07-16T15:29</td>
+<td class="center"><a href="https://www.tiktok.com/@treatyourselfttshop/video/7663024689740123414" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">treatyourselfttshop</div>
+  <div class="desc">If you’ve got pets or people with long hair in your house yo</div>
+</td>
+</tr>
+<tr data-time="2026-08-01T04:39" data-views="267307" data-score="17.1">
+<td class="center">96</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7668794537233468694.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729811032630598622/17298110326305986220.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">OUFALI 女式挂脖健身上衣长款健身背心带内置文胸</div>
+  <div class="item-en">OUFALI Halter Gym Top Longline Workout Tank with Built-in Br</div>
+  
+</td>
+<td class="right num">267.3K</td>
+<td class="right">424</td>
+<td class="nowrap">2026-08-01T04:39</td>
+<td class="center"><a href="https://www.tiktok.com/@hanshopss/video/7668794537233468694" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">hanshopss</div>
+  <div class="desc">OUFALI halter neck top with the built-in bra = bra free summ</div>
+</td>
+</tr>
+<tr data-time="2026-07-06T03:39" data-views="251500" data-score="16.8">
+<td class="center">97</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7659130886964661526.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729789009022065425/17297890090220654250.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">带集成喷雾和洗涤器的三合一窗户清洁刮刀无条纹方形</div>
+  <div class="item-en">3-in-1 Window Cleaning Scraper with Integrated Spray & Scrub</div>
+  
+</td>
+<td class="right num">251.5K</td>
+<td class="right">544</td>
+<td class="nowrap">2026-07-06T03:39</td>
+<td class="center"><a href="https://www.tiktok.com/@buyerbargains/video/7659130886964661526" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">buyerbargains</div>
+  <div class="desc">Why didn’t I know about this sooner! #tiktokmademebuyit #sum</div>
+</td>
+</tr>
+<tr data-time="2026-08-06T20:08" data-views="404864" data-score="16.8">
+<td class="center">98</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670889265236020502.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729859197965409073/17298591979654090730.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">防震手机壳适用于三星 Galaxy S26/S25/S24/S23/S22/S21 Ultra Plus</div>
+  <div class="item-en">Shockproof Phone Case for Samsung Galaxy S26/S25/S24/S23/S22</div>
+  
+</td>
+<td class="right num">404.9K</td>
+<td class="right">490</td>
+<td class="nowrap">2026-08-06T20:08</td>
+<td class="center"><a href="https://www.tiktok.com/@daisy89107/video/7670889265236020502" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">daisy89107</div>
+  <div class="desc">Shockproof Magnetic Case with Slide Camera Lens Protector Fo</div>
+</td>
+</tr>
+<tr data-time="2026-07-18T03:06" data-views="222951" data-score="16.7">
+<td class="center">99</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7663575377092021526.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729649361830516914/17296493618305169140.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">[Dr.Melaxin 官方] Original Cemenrete 钙多香膏 |一体化紧致</div>
+  <div class="item-en">[Dr.Melaxin Official] Original Cemenrete Calcium Multi Balm </div>
+  
+</td>
+<td class="right num">223.0K</td>
+<td class="right">318</td>
+<td class="nowrap">2026-07-18T03:06</td>
+<td class="center"><a href="https://www.tiktok.com/@nickimademebuyit/video/7663575377092021526" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">nickimademebuyit</div>
+  <div class="desc">You need building blocks #tiktokmademebuyit #dealdrops #drme</div>
+</td>
+</tr>
+<tr data-time="2026-08-04T13:07" data-views="264394" data-score="16.6">
+<td class="center">100</td>
+<td class="center"><span class="score lo">17</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670015742762290454.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729790359413300156/17297903594133001560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">儿童百科全书|必备的课外读物</div>
+  <div class="item-en">Children's  Encyclopedia | Must-Have Extracurricular Reading</div>
+  
+</td>
+<td class="right num">264.4K</td>
+<td class="right">339</td>
+<td class="nowrap">2026-08-04T13:07</td>
+<td class="center"><a href="https://www.tiktok.com/@booked.change/video/7670015742762290454" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">booked.change</div>
+  <div class="desc">#book #tiktokshop #childrensbook #100000ways </div>
+</td>
+</tr>
+<tr data-time="2026-07-02T03:28" data-views="481565" data-score="16.2">
+<td class="center">101</td>
+<td class="center"><span class="score lo">16</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7657643708761804064.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729612242297592261/17296122422975922610.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">土耳其设计宁静柔软大面积地毯 160x230 厘米防滑防滑机</div>
+  <div class="item-en">Turkish Design Serenity Soft Large Area Rug 160x230cm Non Sl</div>
+  
+</td>
+<td class="right num">481.6K</td>
+<td class="right">868</td>
+<td class="nowrap">2026-07-02T03:28</td>
+<td class="center"><a href="https://www.tiktok.com/@ifemide_80/video/7657643708761804064" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">ifemide_80</div>
+  <div class="desc">Make your home feel more elegant, beautiful and inviting wit</div>
+</td>
+</tr>
+<tr data-time="2026-08-10T03:13" data-views="202250" data-score="16.1">
+<td class="center">102</td>
+<td class="center"><span class="score lo">16</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672112044434279712.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729869957137930556/17298699571379305560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">12"x10" 回到学校标志，我的儿童学校董事会第一天 – Wooden Pres</div>
+  <div class="item-en">12"x10" Back to School Sign, My First Day of School Board fo</div>
+  
+</td>
+<td class="right num">202.2K</td>
+<td class="right">376</td>
+<td class="nowrap">2026-08-10T03:13</td>
+<td class="center"><a href="https://www.tiktok.com/@lauren_aurora_and_huxley/video/7672112044434279712" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">lauren_aurora_and_huxley</div>
+  <div class="desc">This back to school sign/board is going to be so cute to fil</div>
+</td>
+</tr>
+<tr data-time="2026-05-27T22:27" data-views="1072698" data-score="15.8">
+<td class="center">103</td>
+<td class="center"><span class="score lo">16</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7644578094522666262.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729758765378214650/17297587653782146500.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">成人浮椅泳池漂浮物、带网状座椅的充气水躺椅和</div>
+  <div class="item-en">Floating Chair Pool Float for Adults, Inflatable Water Loung</div>
+  
+</td>
+<td class="right num">1.1M</td>
+<td class="right">727</td>
+<td class="nowrap">2026-05-27T22:27</td>
+<td class="center"><a href="https://www.tiktok.com/@tt.shop.reviews1/video/7644578094522666262" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">tt.shop.reviews1</div>
+  <div class="desc">Inflatable pool hamocks - inflatable pool float #tiktokmadem</div>
+</td>
+</tr>
+<tr data-time="2026-08-04T23:36" data-views="342004" data-score="14.6">
+<td class="center">104</td>
+<td class="center"><span class="score lo">15</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670200891407961366.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729403504565719005/17294035045657190050.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">Freak in the Sheets 马克杯 - 有趣的工作圣诞礼物 - 可重复使用、可水洗 Drinkwar</div>
+  <div class="item-en">Freak in the Sheets Mug - Funny Work Christmas Gift - Reusab</div>
+  
+</td>
+<td class="right num">342.0K</td>
+<td class="right">718</td>
+<td class="nowrap">2026-08-04T23:36</td>
+<td class="center"><a href="https://www.tiktok.com/@taleandtaylor1/video/7670200891407961366" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">taleandtaylor1</div>
+  <div class="desc">Your new favourite office mug. Bold Excel design, cheeky ‘Fr</div>
+</td>
+</tr>
+<tr data-time="2026-08-06T06:30" data-views="220999" data-score="13.7">
+<td class="center">105</td>
+<td class="center"><span class="score lo">14</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7670678546603412758.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729883863070710712/17298838630707107120.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">16 英寸不锈钢落地风扇，带遥控，LED 显示，宽幅摆动</div>
+  <div class="item-en">16" Stainless Steel Stand Fan with Remote Control, LED Displ</div>
+  
+</td>
+<td class="right num">221.0K</td>
+<td class="right">587</td>
+<td class="nowrap">2026-08-06T06:30</td>
+<td class="center"><a href="https://www.tiktok.com/@emirate2230/video/7670678546603412758" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">emirate2230</div>
+  <div class="desc">#fan #steel </div>
+</td>
+</tr>
+<tr data-time="2026-07-29T13:00" data-views="295063" data-score="13.7">
+<td class="center">106</td>
+<td class="center"><span class="score lo">14</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7667774759488212246.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729839160856582306/17298391608565823060.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">SEESE 便携式 21V 无绳高压清洗机，紧凑型电动清洗机，适用于汽车、庭院</div>
+  <div class="item-en">SEESE Portable 21V Cordless Pressure Washer, Compact Power W</div>
+  
+</td>
+<td class="right num">295.1K</td>
+<td class="right">507</td>
+<td class="nowrap">2026-07-29T13:00</td>
+<td class="center"><a href="https://www.tiktok.com/@lznn2832pg0/video/7667774759488212246" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">lznn2832pg0</div>
+  <div class="desc">True self-priming design! Just drop the hose in a bucket of </div>
+</td>
+</tr>
+<tr data-time="2026-07-29T20:47" data-views="253694" data-score="13.4">
+<td class="center">107</td>
+<td class="center"><span class="score lo">13</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7667930793301314838.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729882910586411084/17298829105864110840.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">蓝牙 RGB 吊扇灯，30W 白色风扇灯，带 40 厘米方形叶片，B22</div>
+  <div class="item-en">Bluetooth RGB Ceiling Fan Light, 30W White Fan Lamp with 40c</div>
+  
+</td>
+<td class="right num">253.7K</td>
+<td class="right">815</td>
+<td class="nowrap">2026-07-29T20:47</td>
+<td class="center"><a href="https://www.tiktok.com/@findsbywoody/video/7667930793301314838" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">findsbywoody</div>
+  <div class="desc">#ceilingfan #fan #summersale #tiktokmademebuyit #heatwave </div>
+</td>
+</tr>
+<tr data-time="2026-07-23T02:15" data-views="299404" data-score="13.1">
+<td class="center">108</td>
+<td class="center"><span class="score lo">13</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7665417609080278294.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729882910586411084/17298829105864110840.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">蓝牙 RGB 吊扇灯，30W 白色风扇灯，带 40 厘米方形叶片，B22</div>
+  <div class="item-en">Bluetooth RGB Ceiling Fan Light, 30W White Fan Lamp with 40c</div>
+  
+</td>
+<td class="right num">299.4K</td>
+<td class="right">588</td>
+<td class="nowrap">2026-07-23T02:15</td>
+<td class="center"><a href="https://www.tiktok.com/@gold.findz/video/7665417609080278294" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">gold.findz</div>
+  <div class="desc">The best way to beat the heat #tiktokmademebuylt #sale #heat</div>
+</td>
+</tr>
+<tr data-time="2026-08-03T14:00" data-views="319711" data-score="12.5">
+<td class="center">109</td>
+<td class="center"><span class="score lo">12</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7669515530499378454.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729869957137930556/17298699571379305560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">12"x10" 回到学校标志，我的儿童学校董事会第一天 – Wooden Pres</div>
+  <div class="item-en">12"x10" Back to School Sign, My First Day of School Board fo</div>
+  
+</td>
+<td class="right num">319.7K</td>
+<td class="right">389</td>
+<td class="nowrap">2026-08-03T14:00</td>
+<td class="center"><a href="https://www.tiktok.com/@mumteachestoo/video/7669515530499378454" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">mumteachestoo</div>
+  <div class="desc">Ready for September!  On a discount with free shipping!  #ba</div>
+</td>
+</tr>
+<tr data-time="2026-08-02T08:26" data-views="207473" data-score="10.8">
+<td class="center">110</td>
+<td class="center"><span class="score lo">11</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7669224071623675167.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729831998576826944/17298319985768269440.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">女式 4 件防滑香蕉发夹 - 复古椭圆形豹纹、琥珀色和黑色</div>
+  <div class="item-en">Women's 4 Non-Slip Banana Hair Clips - Vintage Oval Leopard </div>
+  
+</td>
+<td class="right num">207.5K</td>
+<td class="right">3.3K</td>
+<td class="nowrap">2026-08-02T08:26</td>
+<td class="center"><a href="https://www.tiktok.com/@marketers.dream/video/7669224071623675167" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">marketers.dream</div>
+  <div class="desc">nan</div>
+</td>
+</tr>
+<tr data-time="2026-08-08T03:16" data-views="201078" data-score="10.8">
+<td class="center">111</td>
+<td class="center"><span class="score lo">11</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7671370844559461654.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729869226759854301/17298692267598543010.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">互动音乐毛绒玩具 – 香蕉、草莓、胡萝卜电动毛绒玩具</div>
+  <div class="item-en">Interactive Music Plush Toy – Banana, Strawberry & Carrot El</div>
+  
+</td>
+<td class="right num">201.1K</td>
+<td class="right">358</td>
+<td class="nowrap">2026-08-08T03:16</td>
+<td class="center"><a href="https://www.tiktok.com/@shauniemayx/video/7671370844559461654" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">shauniemayx</div>
+  <div class="desc">Toddler toys #viralstrawberry 🍓</div>
+</td>
+</tr>
+<tr data-time="2026-07-18T15:42" data-views="290488" data-score="8.4">
+<td class="center">112</td>
+<td class="center"><span class="score lo">8</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7663770082836778262.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729833792301733892/17298337923017338920.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">成人T10/GT06电动滑板车48V13Ah，续航里程25-35公里。</div>
+  <div class="item-en">Adult T10/GT06 electric scooter  48V13Ah , offering a range </div>
+  
+</td>
+<td class="right num">290.5K</td>
+<td class="right">2.9K</td>
+<td class="nowrap">2026-07-18T15:42</td>
+<td class="center"><a href="https://www.tiktok.com/@merseyelectrics2026/video/7663770082836778262" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">merseyelectrics2026</div>
+  <div class="desc">Motor: 1200W single drive (48V system); the GT06 Plus featur</div>
+</td>
+</tr>
+<tr data-time="2026-07-05T17:58" data-views="236424" data-score="7.6">
+<td class="center">113</td>
+<td class="center"><span class="score lo">8</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7658942650782895392.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729845651130981288/17298456511309812880.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">创维三合一双头电动剃须刀带镜子面部毛发腿毛</div>
+  <div class="item-en">SKYWORTH 3 in 1 dual head electric shaver with mirror , faci</div>
+  
+</td>
+<td class="right num">236.4K</td>
+<td class="right">448</td>
+<td class="nowrap">2026-07-05T17:58</td>
+<td class="center"><a href="https://www.tiktok.com/@skyworthuknewhome/video/7658942650782895392" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">skyworthuknewhome</div>
+  <div class="desc">Well... that's made shaving a lot less annoying. 😂
+ #shaver </div>
+</td>
+</tr>
+<tr data-time="2026-07-22T19:00" data-views="204899" data-score="5.6">
+<td class="center">114</td>
+<td class="center"><span class="score lo">6</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7665210497154977047.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729523674316118580/17295236743161185800.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">泳池充气产品 游泳池充气泳池漂浮物 泳池吊床充气</div>
+  <div class="item-en">Pool Inflatables For Swimming Pool Inflatable Pool Floats Po</div>
+  
+</td>
+<td class="right num">204.9K</td>
+<td class="right">65</td>
+<td class="nowrap">2026-07-22T19:00</td>
+<td class="center"><a href="https://www.tiktok.com/@vickyelizabethpamment/video/7665210497154977047" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">vickyelizabethpamment</div>
+  <div class="desc">Pool Inflatables For Swimming Pool Inflatable Pool Floats Po</div>
+</td>
+</tr>
+</tbody></table></div>
+
+<!-- Tab 1: 新素材 -->
+<div class="tc" id="t1">
+<div class="stats">
+<div class="sc"><div class="lb">新素材数</div><div class="vl">6</div></div>
+<div class="sc"><div class="lb">说明</div><div class="vl" style="font-size:13px">历史从未出现过的视频素材</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索达人、商品..." oninput="ft(this,'tb1')">
+<label><input type="checkbox" checked onchange="f7(this,'tb1')"> 隐藏7天前</label>
+</div>
+<table id="tb1"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">评分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">播放量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">点赞 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">发布时间 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">达人 / 描述 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr data-time="2026-08-12 04:30" data-views="241397" data-score="27.6">
+<td class="center">1</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672874254240664835.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729749973828672458/17297499738286724580.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">维多利亚的秘密午夜绽放身体喷雾 250ml</div>
+  <div class="item-en">Victoria´s Secret Midnight Bloom 250ml Body Mist</div>
+  
+</td>
+<td class="right num">241.4K</td>
+<td class="right">749</td>
+<td class="nowrap">2026-08-12 04:30</td>
+<td class="center"><a href="https://www.tiktok.com/@mumshomeandmore/video/7672874254240664835?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Devon 🤍</div>
+  <div class="desc">Saved £56 at checkout 🎉😍 was no expecting that one, AMAZING!</div>
+</td>
+</tr>
+<tr data-time="2026-08-11 23:48" data-views="215293" data-score="23.2">
+<td class="center">2</td>
+<td class="center"><span class="score lo">23</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672801390888078614.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729568200606386332/17295682006063863320.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">牙齿美白贴，14/28 天治疗，不含过氧化物，无敏感性，素食</div>
+  <div class="item-en">Teeth Whitening Strips, 14/28 Day Treatment, Non Peroxide, S</div>
+  
+</td>
+<td class="right num">215.3K</td>
+<td class="right">1.0K</td>
+<td class="nowrap">2026-08-11 23:48</td>
+<td class="center"><a href="https://www.tiktok.com/@sophienotjacob/video/7672801390888078614?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Jacob & Sophie</div>
+  <div class="desc">Replying to @cookiecookerson123 UNDER £10!! </div>
+</td>
+</tr>
+<tr data-time="2026-08-11 19:59" data-views="366624" data-score="23.4">
+<td class="center">3</td>
+<td class="center"><span class="score lo">23</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672742508316626209.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729402922414870056/17294029224148700560.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">便携式折叠木炭烧烤烧烤野营烧烤架旅行野餐户外金属</div>
+  <div class="item-en">Portable Folding Charcoal BBQ Barbecue Camping Grill Travel </div>
+  
+</td>
+<td class="right num">366.6K</td>
+<td class="right">304</td>
+<td class="nowrap">2026-08-11 19:59</td>
+<td class="center"><a href="https://www.tiktok.com/@save_lots_of_money/video/7672742508316626209?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Save_Lots_Of_Money</div>
+  <div class="desc">Disposable barbecues are a thing of the past! Re-use this ti</div>
+</td>
+</tr>
+<tr data-time="2026-08-11 04:18" data-views="376624" data-score="28.3">
+<td class="center">4</td>
+<td class="center"><span class="score lo">28</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672499985686088982.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729427688251952801/17294276882519528010.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">GOOGOO 人发自然直发接发胶带</div>
+  <div class="item-en">GOOGOO Hair Extensions Tape in Human Hair Natural Straight</div>
+  
+</td>
+<td class="right num">376.6K</td>
+<td class="right">4.5K</td>
+<td class="nowrap">2026-08-11 04:18</td>
+<td class="center"><a href="https://www.tiktok.com/@ab51gar/video/7672499985686088982?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Abbey Coburn-Gardiner</div>
+  <div class="desc">Mine are 100g per pack and I went for 24inch ! #fypp #viral </div>
+</td>
+</tr>
+<tr data-time="2026-08-11 02:27" data-views="203903" data-score="25.4">
+<td class="center">5</td>
+<td class="center"><span class="score lo">25</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672471365928209686.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729767054860130838/17297670548601308380.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">新款卡尼尔保湿冰糕面霜超清新轻盈护肤，适合脱水</div>
+  <div class="item-en">NEW Garnier Hydrating Sorbet Face Cream Ultra Fresh & Light </div>
+  
+</td>
+<td class="right num">203.9K</td>
+<td class="right">32.1K</td>
+<td class="nowrap">2026-08-11 02:27</td>
+<td class="center"><a href="https://www.tiktok.com/@elliemillar96/video/7672471365928209686?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Ellie Millar</div>
+  <div class="desc">2 years Mrs P❤️🫶🏼 The perfume is @Glossier #fyp #getreadywit</div>
+</td>
+</tr>
+<tr data-time="2026-08-11 00:24" data-views="258357" data-score="27.0">
+<td class="center">6</td>
+<td class="center"><span class="score lo">27</span> <span class="tag-engage">高互动</span> </td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672439548995128579.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729453933578915166/17294539335789151660.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">每月习惯追踪器 - Small Wins Club</div>
+  <div class="item-en">Monthly Habit Tracker - Small Wins Club</div>
+  
+</td>
+<td class="right num">258.4K</td>
+<td class="right">8.7K</td>
+<td class="nowrap">2026-08-11 00:24</td>
+<td class="center"><a href="https://www.tiktok.com/@anniebea1e/video/7672439548995128579?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">打开</a></td>
+<td class="cell-main">
+  <div class="creator">Annie 🐶⭐️🪸🌻🥑🏃🏼‍♀️</div>
+  <div class="desc">Thank you guys so much!! I love packaging orders for you 🩷🩷🩷</div>
+</td>
+</tr>
+</tbody></table></div>
+
+<!-- Tab 2: 高潜商品 -->
+<div class="tc" id="t2">
+<div class="stats">
+<div class="sc"><div class="lb">候选商品数</div><div class="vl">1</div></div>
+<div class="sc"><div class="lb">筛选逻辑</div><div class="vl" style="font-size:13px">近3天视频聚合 | 去除与前两栏重合</div></div>
+<div class="sc"><div class="lb">最高决策分</div><div class="vl">39</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索商品、达人..." oninput="ft(this,'tb2')">
+</div>
+<table id="tb2"><thead><tr>
+<th data-c="0" data-t="n" style="width:32px"># <span class="si">&#9650;&#9660;</span></th>
+<th data-c="1" data-t="n" style="width:44px">决策分 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:56px">样本视频</th>
+<th style="width:56px">商品</th>
+<th data-c="4" data-t="s">商品名 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">视频数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">达人数 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="n" style="text-align:right">累计播放 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:36px">链接</th>
+<th data-c="9" data-t="s">样本说明 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr>
+<td class="center">1</td>
+<td class="center"><span class="score lo">39</span></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/video/cover/7672449793074973974.webp?x-oss-process=image/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td><img src="https://cdn.tabcut.com/dataservice/media/item/1729734790441245061/17297347904412450610.webp?x-oss-process=image/resize,w_246,h_246/format,webp" loading="lazy" class="thumb" style="width:48px;height:48px;" onerror="this.style.display='none'" onclick="showImg(this.src)"></td>
+<td class="cell-item">
+  <div class="item-cn">缝隙清洁刷，浴室瓷砖凹槽缝隙清洁刷，优质缝隙</div>
+  <div class="item-en">Crevice Cleaning Brush, Bathroom Tile Groove Gap Cleaning Br</div>
+  <div class="cat">nan</div>
+</td>
+<td class="right num">1</td>
+<td class="right">1</td>
+<td class="right">550.3K</td>
+<td class="center"><a href="https://www.tiktok.com/@lilliemurrayx/video/7672449793074973974?is_copy_url=1&is_from_webapp=v1" target="_blank" rel="noopener">样本</a></td>
+<td class="cell-main">
+  <div class="creator">Lillie Murray</div>
+  <div class="desc">Wow & wow! Check if you get yours free shipping?! Well cheap</div>
+</td>
+</tr>
+</tbody></table></div>
+
+<!-- Tab 3: 商品榜 -->
+<div class="tc" id="t3">
+<div class="stats">
+<div class="sc"><div class="lb">新商品数</div><div class="vl">0</div></div>
+<div class="sc"><div class="lb">说明</div><div class="vl" style="font-size:13px">历史从未出现过的商品</div></div>
+</div>
+<div class="toolbar">
+<input type="text" placeholder="搜索商品、店铺..." oninput="ft(this,'tb3')">
+</div>
+<table id="tb3"><thead><tr>
+<th data-c="0" data-t="n" style="width:36px">排名 <span class="si">&#9650;&#9660;</span></th>
+<th style="width:60px">图片</th>
+<th data-c="2" data-t="s">商品名 / 分类 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="3" data-t="n" style="text-align:right">价格 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="4" data-t="n" style="text-align:right">日销量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="5" data-t="n" style="text-align:right">总销量 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="6" data-t="n" style="text-align:right">日GMV <span class="si">&#9650;&#9660;</span></th>
+<th data-c="7" data-t="s">店铺 <span class="si">&#9650;&#9660;</span></th>
+<th data-c="8" data-t="n" style="text-align:center">佣金 <span class="si">&#9650;&#9660;</span></th>
+</tr></thead><tbody>
+<tr><td colspan="10" class="empty">暂无数据</td></tr>
+</tbody></table></div>
+
+<script>
+function sw(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',j===i))}
+function ft(inp,tid){const q=inp.value.toLowerCase();document.getElementById(tid).querySelectorAll('tbody tr').forEach(r=>{if(!r.classList.contains('h7'))r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'})}
+function f7(cb,tid){const now=Date.now(),lim=7*864e5;document.getElementById(tid).querySelectorAll('tbody tr').forEach(r=>{const t=r.dataset.time;if(!t)return;const d=new Date(t.replace(' ','T'));if(now-d.getTime()>lim){if(cb.checked){r.classList.add('h7','hidden-row')}else{r.classList.remove('h7','hidden-row')}}})}
+function showImg(s){document.getElementById('modalImg').src=s;document.getElementById('modal').classList.add('show')}
+document.querySelectorAll('th[data-c]').forEach(th=>{th.addEventListener('click',function(){const tb=this.closest('table'),tbody=tb.querySelector('tbody'),rows=Array.from(tbody.querySelectorAll('tr')),c=+this.dataset.c,t=this.dataset.t,asc=this.classList.contains('asc');tb.querySelectorAll('th').forEach(h=>h.classList.remove('asc','desc'));this.classList.add(asc?'desc':'asc');const d=asc?-1:1;const pn=s=>{s=s.replace(/[$,%]/g,'').trim();if(s.endsWith('M'))return parseFloat(s)*1e6;if(s.endsWith('K'))return parseFloat(s)*1e3;return parseFloat(s)||0};rows.sort((a,b)=>{const va=a.cells[c]?a.cells[c].textContent.trim():'',vb=b.cells[c]?b.cells[c].textContent.trim():'';return t==='n'?(pn(va)-pn(vb))*d:va.localeCompare(vb)*d});rows.forEach(r=>tbody.appendChild(r))})});
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.toolbar input[type=checkbox]').forEach(cb=>{if(cb.checked){const tid=cb.closest('.tc').querySelector('table').id;f7(cb,tid)}})});
+</script>
+</body>
+</html>
